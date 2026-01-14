@@ -37,8 +37,17 @@ export const getBooks = async (req, res) => {
 
 export const getGenres = async (req, res) => {
   try {
-    const genres = await collections.books.distinct('genre');
-    res.status(200).json(genres);
+    const genres = await collections.books
+      .aggregate([
+        { $group: { _id: '$genre' } },
+        { $sort: { _id: 1 } },
+        { $project: { _id: 0, genre: '$_id' } },
+      ])
+      .toArray();
+
+    const genreStrings = genres.map(g => g.genre).filter(g => g && g !== ''); // Filter out null or empty strings
+
+    res.status(200).json(genreStrings);
   } catch (error) {
     res
       .status(500)
