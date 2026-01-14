@@ -159,4 +159,57 @@ export const updateUserRole = async (req, res) => {
       .status(500)
       .json({ message: 'Error updating user role', error: error.message });
   }
+  res
+    .status(500)
+    .json({ message: 'Error updating user role', error: error.message });
+};
+
+export const getUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await collections.users.findOne({ _id: new ObjectId(id) });
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    const { password: _, ...userWithoutPassword } = user;
+    res.status(200).json(userWithoutPassword);
+  } catch (error) {
+    console.error('Error fetching user:', error);
+    res
+      .status(500)
+      .json({ message: 'Error fetching user', error: error.message });
+  }
+};
+
+export const addToShelf = async (req, res) => {
+  try {
+    const { id } = req.params; // User ID
+    const { bookId } = req.body;
+
+    if (!bookId) {
+      return res.status(400).json({ message: 'Book ID is required' });
+    }
+
+    const result = await collections.users.updateOne(
+      { _id: new ObjectId(id) },
+      { $addToSet: { shelf: bookId } }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (result.modifiedCount === 0) {
+      return res.status(200).json({ message: 'Book already in shelf' });
+    }
+
+    res.status(200).json({ message: 'Book added to shelf successfully' });
+  } catch (error) {
+    console.error('Error adding to shelf:', error);
+    res
+      .status(500)
+      .json({ message: 'Error adding to shelf', error: error.message });
+  }
 };

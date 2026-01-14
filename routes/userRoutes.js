@@ -1,5 +1,7 @@
 import express from 'express';
 import {
+  addToShelf,
+  getUserById,
   getUsers,
   googleLogin,
   loginUser,
@@ -14,6 +16,8 @@ router.post('/users', validateUserRegistration, registerUser);
 router.post('/users/login', loginUser);
 router.post('/users/google', googleLogin);
 router.get('/users', getUsers);
+router.get('/users/:id', getUserById);
 router.patch('/users/:id/role', updateUserRole);
+router.post('/users/:id/shelf', addToShelf);
 
 export default router;

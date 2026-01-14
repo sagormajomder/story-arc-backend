@@ -22,6 +22,7 @@ async function connectDB() {
     collections.books = db.collection('books');
     collections.genres = db.collection('genres');
     collections.tutorials = db.collection('tutorials');
+    collections.reviews = db.collection('reviews');
     console.log('Connected to MongoDB!');
     return db;
   } catch (error) {

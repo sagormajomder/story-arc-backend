@@ -3,7 +3,8 @@ import express from 'express';
 import { connectDB } from './config/db.js';
 import bookRoutes from './routes/bookRoutes.js';
 import genreRoutes from './routes/genreRoutes.js';
-import tutorialRoutes from './routes/tutorialRoutes.js';
+import reviewRoutes from './routes/reviewRoutes.js';
+import { default as tutorialRoutes } from './routes/tutorialRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
@@ -23,6 +24,7 @@ app.use('/api/v1', userRoutes);
 app.use('/api/v1/books', bookRoutes);
 app.use('/api/v1/genres', genreRoutes);
 app.use('/api/v1/tutorials', tutorialRoutes);
+app.use('/api/v1/reviews', reviewRoutes);
 
 async function run() {
   await connectDB();
