@@ -55,7 +55,7 @@ The dedicated backend server for Story Arc, handling authentication, data manage
    Create a \`.env\` file in the root directory:
 
    ```env
-   PORT=5000
+   PORT=8000
    DB_URI=<your-mongodb-connection-string>
    JWT_SECRET=<your-jwt-secret>
    ```
@@ -67,10 +67,9 @@ The dedicated backend server for Story Arc, handling authentication, data manage
 
 ## API Endpoints
 
-- **Books**: \`GET /api/v1/books\`, \`POST /api/v1/books\`
-- **Reviews**: \`GET /api/v1/reviews/admin/all\`, \`POST /api/v1/reviews\`
-- **Dashboard**: \`GET /api/v1/dashboard/stats\`, \`GET /api/v1/dashboard/charts\`
-- **Auth**: \`POST /api/v1/jwt\`, \`POST /api/v1/logout\`
+- **Books**: `GET /api/v1/books`, `POST /api/v1/books`
+- **Reviews**: `GET /api/v1/reviews/admin/all`, `POST /api/v1/reviews`
+- **Dashboard**: `GET /api/v1/dashboard/stats`, `GET /api/v1/dashboard/charts`
 
 ## Connect with Me
 
