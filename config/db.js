@@ -20,6 +20,7 @@ async function connectDB() {
     db = client.db('storyArcDB');
     collections.users = db.collection('users');
     collections.books = db.collection('books');
+    collections.genres = db.collection('genres');
     console.log('Connected to MongoDB!');
     return db;
   } catch (error) {

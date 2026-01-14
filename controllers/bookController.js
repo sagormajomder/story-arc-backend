@@ -7,7 +7,15 @@ export const getBooks = async (req, res) => {
     const query = {};
 
     if (genre && genre !== 'All Genres') {
-      query.genre = genre;
+      if (genre === 'Uncategorized') {
+        query.$or = [
+          { genre: '' },
+          { genre: { $exists: false } },
+          { genre: null },
+        ];
+      } else {
+        query.genre = genre;
+      }
     }
 
     const pageNum = parseInt(page);
@@ -46,6 +54,18 @@ export const getGenres = async (req, res) => {
       .toArray();
 
     const genreStrings = genres.map(g => g.genre).filter(g => g && g !== ''); // Filter out null or empty strings
+
+    // Check if there are any books with empty or null genre
+    const hasUncategorized = genres.some(g => !g.genre || g.genre === '');
+
+    if (hasUncategorized) {
+      genreStrings.push('Uncategorized');
+    }
+
+    // Sort again to ensure Uncategorized is at the end or alphabetized as preferred.
+    // Usually Uncategorized is good at the end or beginning.
+    // Let's keep it appended or sort it.
+    // Let's just return it as is, usually specific genres are sorted.
 
     res.status(200).json(genreStrings);
   } catch (error) {

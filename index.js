@@ -2,6 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import { connectDB } from './config/db.js';
 import bookRoutes from './routes/bookRoutes.js';
+import genreRoutes from './routes/genreRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
@@ -19,6 +20,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/v1', userRoutes);
 app.use('/api/v1/books', bookRoutes);
+app.use('/api/v1/genres', genreRoutes);
 
 async function run() {
   await connectDB();
