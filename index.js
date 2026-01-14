@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
 import { connectDB } from './config/db.js';
+import bookRoutes from './routes/bookRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
@@ -17,6 +18,7 @@ app.get('/', (req, res) => {
 
 // Routes
 app.use('/api/v1', userRoutes);
+app.use('/api/v1/books', bookRoutes);
 
 async function run() {
   await connectDB();
