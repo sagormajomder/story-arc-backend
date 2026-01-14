@@ -3,15 +3,31 @@ import { collections } from '../config/db.js';
 
 export const getBooks = async (req, res) => {
   try {
-    const { genre } = req.query;
+    const { genre, page = 1, limit = 5 } = req.query;
     const query = {};
 
     if (genre && genre !== 'All Genres') {
       query.genre = genre;
     }
 
-    const books = await collections.books.find(query).toArray();
-    res.status(200).json(books);
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+    const skip = (pageNum - 1) * limitNum;
+
+    const books = await collections.books
+      .find(query)
+      .skip(skip)
+      .limit(limitNum)
+      .toArray();
+
+    const totalBooks = await collections.books.countDocuments(query);
+
+    res.status(200).json({
+      books,
+      totalBooks,
+      totalPages: Math.ceil(totalBooks / limitNum),
+      currentPage: pageNum,
+    });
   } catch (error) {
     res
       .status(500)
@@ -48,6 +64,7 @@ export const getBookById = async (req, res) => {
 export const createBook = async (req, res) => {
   try {
     const newBook = req.body;
+    newBook.createdAt = new Date().toISOString();
     const result = await collections.books.insertOne(newBook);
     res.status(201).json({
       message: 'Book created successfully',
