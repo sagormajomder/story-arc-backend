@@ -2,9 +2,10 @@ import cors from 'cors';
 import express from 'express';
 import { connectDB } from './config/db.js';
 import bookRoutes from './routes/bookRoutes.js';
+import dashboardRoutes from './routes/dashboardRoutes.js';
 import genreRoutes from './routes/genreRoutes.js';
 import reviewRoutes from './routes/reviewRoutes.js';
-import { default as tutorialRoutes } from './routes/tutorialRoutes.js';
+import tutorialRoutes from './routes/tutorialRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
 const app = express();
@@ -25,6 +26,7 @@ app.use('/api/v1/books', bookRoutes);
 app.use('/api/v1/genres', genreRoutes);
 app.use('/api/v1/tutorials', tutorialRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
+app.use('/api/v1/dashboard', dashboardRoutes);
 
 async function run() {
   await connectDB();
