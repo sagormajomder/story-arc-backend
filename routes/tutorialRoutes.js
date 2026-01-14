@@ -6,11 +6,13 @@ import {
   updateTutorial,
 } from '../controllers/tutorialController.js';
 
+import { verifyAdmin, verifyToken } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
 
 router.get('/', getTutorials);
-router.post('/', createTutorial);
-router.put('/:id', updateTutorial);
-router.delete('/:id', deleteTutorial);
+router.post('/', verifyToken, verifyAdmin, createTutorial);
+router.put('/:id', verifyToken, verifyAdmin, updateTutorial);
+router.delete('/:id', verifyToken, verifyAdmin, deleteTutorial);
 
 export default router;

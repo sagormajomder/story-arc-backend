@@ -1,4 +1,5 @@
 import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
 import { ObjectId } from 'mongodb';
 import { collections } from '../config/db.js';
 
@@ -53,8 +54,15 @@ export const loginUser = async (req, res) => {
     // Exclude password from response
     const { password: _, ...userWithoutPassword } = user;
 
-    // Return user info
-    res.status(200).json(userWithoutPassword);
+    // Generate JWT Token
+    const token = jwt.sign(
+      { email: user.email, role: user.role, id: user._id },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '1h' }
+    );
+
+    // Return user info and token
+    res.status(200).json({ ...userWithoutPassword, token });
   } catch (error) {
     console.error('Error logging in user:', error);
     res.status(500).json({ message: 'Internal server error' });
@@ -83,12 +91,30 @@ export const googleLogin = async (req, res) => {
       const createdUser = await collections.users.findOne({
         _id: result.insertedId,
       });
-      return res.status(200).json(createdUser);
+
+      // Generate JWT Token
+      const token = jwt.sign(
+        {
+          email: createdUser.email,
+          role: createdUser.role,
+          id: createdUser._id,
+        },
+        process.env.ACCESS_TOKEN_SECRET,
+        { expiresIn: '1h' }
+      );
+
+      return res.status(200).json({ ...createdUser, token });
     }
 
-    // Return existing user
+    // Return existing user with token
+    // Generate JWT Token
+    const token = jwt.sign(
+      { email: user.email, role: user.role, id: user._id },
+      process.env.ACCESS_TOKEN_SECRET,
+      { expiresIn: '1h' }
+    );
     // console.log(user);
-    res.status(200).json(user);
+    res.status(200).json({ ...user, token });
   } catch (error) {
     console.error('Error processing social login:', error);
     res.status(500).json({ message: 'Internal server error' });

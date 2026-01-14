@@ -10,14 +10,20 @@ import {
 } from '../controllers/userController.js';
 import { validateUserRegistration } from '../middleware/userValidator.js';
 
+import {
+  verifyAdmin,
+  verifyToken,
+  verifyUser,
+} from '../middleware/authMiddleware.js';
+
 const router = express.Router();
 
 router.post('/users', validateUserRegistration, registerUser);
 router.post('/users/login', loginUser);
 router.post('/users/google', googleLogin);
-router.get('/users', getUsers);
-router.get('/users/:id', getUserById);
-router.patch('/users/:id/role', updateUserRole);
-router.post('/users/:id/shelf', addToShelf);
+router.get('/users', verifyToken, verifyAdmin, getUsers);
+router.get('/users/:id', verifyToken, verifyUser, getUserById);
+router.patch('/users/:id/role', verifyToken, verifyAdmin, updateUserRole);
+router.post('/users/:id/shelf', verifyToken, verifyUser, addToShelf);
 
 export default router;

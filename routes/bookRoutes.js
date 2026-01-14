@@ -8,13 +8,15 @@ import {
   updateBook,
 } from '../controllers/bookController.js';
 
+import { verifyAdmin, verifyToken } from '../middleware/authMiddleware.js';
+
 const router = express.Router();
 
 router.get('/genres', getGenres);
 router.get('/', getBooks);
 router.get('/:id', getBookById);
-router.post('/', createBook);
-router.put('/:id', updateBook);
-router.delete('/:id', deleteBook);
+router.post('/', verifyToken, verifyAdmin, createBook);
+router.put('/:id', verifyToken, verifyAdmin, updateBook);
+router.delete('/:id', verifyToken, verifyAdmin, deleteBook);
 
 export default router;
