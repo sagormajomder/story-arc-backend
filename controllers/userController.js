@@ -59,3 +59,37 @@ export const loginUser = async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 };
+
+export const googleLogin = async (req, res) => {
+  try {
+    const { email, name, image } = req.body;
+
+    const user = await collections.users.findOne({ email });
+
+    if (!user) {
+      const newUser = {
+        name,
+        email,
+        image,
+        role: 'user',
+        provider: 'google',
+        createdAt: new Date().toISOString(),
+      };
+
+      const result = await collections.users.insertOne(newUser);
+
+      // Fetch the created user to return it
+      const createdUser = await collections.users.findOne({
+        _id: result.insertedId,
+      });
+      return res.status(200).json(createdUser);
+    }
+
+    // Return existing user
+    // console.log(user);
+    res.status(200).json(user);
+  } catch (error) {
+    console.error('Error processing social login:', error);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+};
