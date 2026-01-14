@@ -15,6 +15,12 @@ export const getBooks = async (req, res) => {
 
     const query = {};
 
+    // Filter by IDs (for Library/Shelf)
+    if (req.query.ids) {
+      const ids = req.query.ids.split(',').map(id => new ObjectId(id.trim()));
+      query._id = { $in: ids };
+    }
+
     // Search (Title or Author)
     if (search) {
       query.$or = [

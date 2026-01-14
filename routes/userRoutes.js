@@ -6,6 +6,7 @@ import {
   googleLogin,
   loginUser,
   registerUser,
+  updateShelfProgress,
   updateUserRole,
 } from '../controllers/userController.js';
 import { validateUserRegistration } from '../middleware/userValidator.js';
@@ -25,5 +26,11 @@ router.get('/users', verifyToken, verifyAdmin, getUsers);
 router.get('/users/:id', verifyToken, verifyUser, getUserById);
 router.patch('/users/:id/role', verifyToken, verifyAdmin, updateUserRole);
 router.post('/users/:id/shelf', verifyToken, verifyUser, addToShelf);
+router.patch(
+  '/users/:id/shelf/:bookId',
+  verifyToken,
+  verifyUser,
+  updateShelfProgress
+);
 
 export default router;

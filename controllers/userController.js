@@ -211,25 +211,48 @@ export const getUserById = async (req, res) => {
 
 export const addToShelf = async (req, res) => {
   try {
-    const { id } = req.params; // User ID
-    const { bookId } = req.body;
+    const { id } = req.params;
+    const { bookId, status = 'Want to Read' } = req.body;
 
     if (!bookId) {
       return res.status(400).json({ message: 'Book ID is required' });
     }
 
-    const result = await collections.users.updateOne(
-      { _id: new ObjectId(id) },
-      { $addToSet: { shelf: bookId } }
-    );
-
-    if (result.matchedCount === 0) {
+    const user = await collections.users.findOne({ _id: new ObjectId(id) });
+    if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    if (result.modifiedCount === 0) {
-      return res.status(200).json({ message: 'Book already in shelf' });
+    // Check if book is already in shelf
+    const shelf = user.shelf || [];
+    const isAlreadyInShelf = shelf.some(item => item.bookId === bookId);
+
+    if (isAlreadyInShelf) {
+      await collections.users.updateOne(
+        { _id: new ObjectId(id), 'shelf.bookId': bookId },
+        {
+          $set: {
+            'shelf.$.status': status,
+          },
+        }
+      );
+      return res.status(200).json({ message: 'Book status updated' });
     }
+
+    // Add new item
+    const newItem = {
+      bookId,
+      status,
+      progress: 0,
+      startedAt:
+        status === 'Currently Reading' ? new Date().toISOString() : null,
+      addedAt: new Date().toISOString(),
+    };
+
+    const result = await collections.users.updateOne(
+      { _id: new ObjectId(id) },
+      { $push: { shelf: newItem } }
+    );
 
     res.status(200).json({ message: 'Book added to shelf successfully' });
   } catch (error) {
@@ -237,5 +260,52 @@ export const addToShelf = async (req, res) => {
     res
       .status(500)
       .json({ message: 'Error adding to shelf', error: error.message });
+  }
+};
+
+export const updateShelfProgress = async (req, res) => {
+  try {
+    const { id, bookId } = req.params;
+    const { progress, totalPages, status } = req.body;
+    // progress is pages read
+
+    const user = await collections.users.findOne({ _id: new ObjectId(id) });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // We need to find the specific item index or match it
+    // Using positional operator $
+
+    // Determine new status if auto-completing
+    let newStatus = status;
+    let finishedAt = null;
+
+    if (progress >= totalPages && totalPages > 0) {
+      newStatus = 'Read';
+      finishedAt = new Date().toISOString();
+    }
+
+    const updateFields = {
+      'shelf.$.progress': parseInt(progress),
+    };
+
+    if (newStatus) updateFields['shelf.$.status'] = newStatus;
+    if (finishedAt) updateFields['shelf.$.finishedAt'] = finishedAt;
+    if (totalPages) updateFields['shelf.$.totalPages'] = parseInt(totalPages);
+
+    const result = await collections.users.updateOne(
+      { _id: new ObjectId(id), 'shelf.bookId': bookId },
+      { $set: updateFields }
+    );
+
+    if (result.matchedCount === 0) {
+      return res.status(404).json({ message: 'Book not found in shelf' });
+    }
+
+    res.status(200).json({ message: 'Progress updated', status: newStatus });
+  } catch (error) {
+    console.error('Error updating progress:', error);
+    res
+      .status(500)
+      .json({ message: 'Error updating progress', error: error.message });
   }
 };
