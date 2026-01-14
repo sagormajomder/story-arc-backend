@@ -309,3 +309,129 @@ export const updateShelfProgress = async (req, res) => {
       .json({ message: 'Error updating progress', error: error.message });
   }
 };
+export const getUserStats = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await collections.users.findOne({ _id: new ObjectId(id) });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const shelf = user.shelf || [];
+    const readBooks = shelf.filter(
+      item =>
+        item.status === 'Read' || (typeof item === 'string' ? false : false)
+    );
+
+    // Books Read This Year
+    const currentYear = new Date().getFullYear();
+    const booksReadThisYear = readBooks.filter(item => {
+      const finishedDate = item.finishedAt ? new Date(item.finishedAt) : null;
+      return finishedDate && finishedDate.getFullYear() === currentYear;
+    }).length;
+
+    // Total Pages Read (Accumulate progress)
+    const totalPagesRead = shelf.reduce(
+      (acc, item) => acc + (item.progress || 0),
+      0
+    );
+
+    // Total Finish Books
+    const totalBooksRead = readBooks.length;
+
+    // Streak (Mock or Simple logic)
+    const streak = user.streak || 0;
+
+    // Average Rating Calculation
+    const userReviews = await collections.reviews
+      .find({ userEmail: user.email })
+      .toArray();
+    const totalUserRatings = userReviews.length;
+    const sumUserRatings = userReviews.reduce(
+      (acc, review) => acc + (review.rating || 0),
+      0
+    );
+    const averageRating =
+      totalUserRatings > 0 ? (sumUserRatings / totalUserRatings).toFixed(1) : 0;
+
+    // Goal
+    const goal = user.readingGoal || {
+      year: currentYear,
+      target: 20,
+      current: booksReadThisYear,
+    };
+    // Ensure accurate current count
+    goal.current = booksReadThisYear;
+
+    res.status(200).json({
+      stats: {
+        booksReadThisYear,
+        totalPagesRead,
+        totalBooksRead,
+        streak,
+        averageRating,
+        totalUserRatings,
+      },
+      goal,
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({ message: 'Error fetching stats' });
+  }
+};
+
+export const updateReadingGoal = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { target } = req.body;
+    const currentYear = new Date().getFullYear();
+
+    await collections.users.updateOne(
+      { _id: new ObjectId(id) },
+      {
+        $set: {
+          'readingGoal.target': parseInt(target),
+          'readingGoal.year': currentYear,
+        },
+      }
+    );
+    res.status(200).json({ message: 'Goal updated' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating goal' });
+  }
+};
+
+export const getRecommendations = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await collections.users.findOne({ _id: new ObjectId(id) });
+    if (!user) return res.status(404).json({ message: 'User not found' });
+
+    const shelf = user.shelf || [];
+    const shelvedBookIds = shelf.map(item =>
+      typeof item === 'string' ? new ObjectId(item) : new ObjectId(item.bookId)
+    );
+
+    // 1. Get User Genres from Read books
+    // We need to fetch the books in the shelf to know their genres
+    // Ideally we optimize this with an aggregation
+
+    // Aggregation:
+    // Match User -> Unwind Shelf -> Lookup Books -> Group by Genre -> Sort Count
+
+    // Simplification for MVP:
+    // Just fetch highly rated books that are NOT in user's shelf.
+    // If we have time: prioritize genres.
+
+    const recommendations = await collections.books
+      .aggregate([
+        { $match: { _id: { $nin: shelvedBookIds } } }, // Exclude moved books
+        { $sort: { rating: -1, reviewCount: -1 } }, // Top rated
+        { $limit: 15 },
+      ])
+      .toArray();
+
+    res.status(200).json(recommendations);
+  } catch (error) {
+    console.error('Error fetching recommendations:', error);
+    res.status(500).json({ message: 'Error fetching recommendations' });
+  }
+};

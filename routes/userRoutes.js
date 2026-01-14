@@ -1,11 +1,14 @@
 import express from 'express';
 import {
   addToShelf,
+  getRecommendations,
   getUserById,
   getUsers,
+  getUserStats,
   googleLogin,
   loginUser,
   registerUser,
+  updateReadingGoal,
   updateShelfProgress,
   updateUserRole,
 } from '../controllers/userController.js';
@@ -32,5 +35,13 @@ router.patch(
   verifyUser,
   updateShelfProgress
 );
+router.get('/users/:id/stats', verifyToken, verifyUser, getUserStats);
+router.get(
+  '/users/:id/recommendations',
+  verifyToken,
+  verifyUser,
+  getRecommendations
+);
+router.post('/users/:id/goal', verifyToken, verifyUser, updateReadingGoal);
 
 export default router;
