@@ -3,19 +3,103 @@ import { collections } from '../config/db.js';
 
 export const getBooks = async (req, res) => {
   try {
-    const { genre, page = 1, limit = 5 } = req.query;
+    const {
+      search,
+      genre,
+      minRating,
+      maxRating,
+      sort,
+      page = 1,
+      limit = 10,
+    } = req.query;
+
     const query = {};
 
+    // Search (Title or Author)
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { author: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    // Genre Filter (Multi-select support: "Sci-Fi,Fantasy")
     if (genre && genre !== 'All Genres') {
-      if (genre === 'Uncategorized') {
+      const genres = genre.split(',').map(g => g.trim());
+      if (genres.includes('Uncategorized')) {
         query.$or = [
-          { genre: '' },
+          ...(query.$or || []),
+          { genre: { $in: genres.filter(g => g !== 'Uncategorized') } },
+          { genre: { $in: [null, ''] } },
           { genre: { $exists: false } },
-          { genre: null },
         ];
+        // Clean up empty $or if no other genres
+        if (
+          query.$or.length === 1 &&
+          query.$or[0].genre &&
+          query.$or[0].genre.$in.length === 0
+        ) {
+          // Only Uncategorized logic remains, but we mixed it with search $or...
+          // If search exists, we need $and.
+          // Let's Simplify: complex combinations of ORs for search AND genre are tricky.
+          // Re-structuring:
+          // $and: [ { $or: search }, { $or: genre } ]
+        }
       } else {
-        query.genre = genre;
+        query.genre = { $in: genres };
       }
+    }
+
+    // Re-building Query to safely handle Search + Genre complexity
+    const finalQuery = {};
+    if (search) {
+      finalQuery.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { author: { $regex: search, $options: 'i' } },
+      ];
+    }
+
+    if (genre && genre !== 'All Genres') {
+      const genres = genre.split(',').map(g => g.trim());
+      const genreQuery = [];
+
+      const realGenres = genres.filter(g => g !== 'Uncategorized');
+      if (realGenres.length > 0) {
+        genreQuery.push({ genre: { $in: realGenres } });
+      }
+
+      if (genres.includes('Uncategorized')) {
+        genreQuery.push({ genre: { $in: [null, ''] } });
+        genreQuery.push({ genre: { $exists: false } });
+      }
+
+      if (genreQuery.length > 0) {
+        // If we have search $or, we must use $and for genre
+        if (finalQuery.$or) {
+          finalQuery.$and = [{ $or: genreQuery }];
+        } else {
+          finalQuery.$or = genreQuery;
+        }
+      }
+    }
+
+    // Rating Filter
+    if (minRating || maxRating) {
+      finalQuery.rating = {};
+      if (minRating) finalQuery.rating.$gte = parseFloat(minRating);
+      if (maxRating) finalQuery.rating.$lte = parseFloat(maxRating);
+    }
+
+    // Sorting
+    let sortOptions = { createdAt: -1 }; // Default: Newest
+    if (sort === 'rating_desc') {
+      sortOptions = { rating: -1 };
+    } else if (sort === 'shelved_desc') {
+      sortOptions = { shelvedCount: -1 };
+    } else if (sort === 'title_asc') {
+      sortOptions = { title: 1 };
+    } else if (sort === 'title_desc') {
+      sortOptions = { title: -1 };
     }
 
     const pageNum = parseInt(page);
@@ -23,12 +107,13 @@ export const getBooks = async (req, res) => {
     const skip = (pageNum - 1) * limitNum;
 
     const books = await collections.books
-      .find(query)
+      .find(finalQuery)
+      .sort(sortOptions)
       .skip(skip)
       .limit(limitNum)
       .toArray();
 
-    const totalBooks = await collections.books.countDocuments(query);
+    const totalBooks = await collections.books.countDocuments(finalQuery);
 
     res.status(200).json({
       books,
