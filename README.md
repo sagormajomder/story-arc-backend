@@ -57,7 +57,7 @@ The dedicated backend server for Story Arc, handling authentication, data manage
    ```env
    PORT=8000
    DB_URI=<your-mongodb-connection-string>
-   JWT_SECRET=<your-jwt-secret>
+   ACCESS_TOKEN_SECRET=<your-secret>
    ```
 
 5. **Run the server**
