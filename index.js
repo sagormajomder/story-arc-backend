@@ -8,6 +8,9 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import tutorialRoutes from './routes/tutorialRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
+import dns from 'node:dns';
+dns.setServers(['1.1.1.1', '1.0.0.1']);
+
 const app = express();
 const port = process.env.PORT || 5000;
 
