@@ -18,7 +18,7 @@ export const getReviews = async (req, res) => {
   }
 };
 
-// Admin: Get reviews (default pending, or by filter)
+
 // Admin: Get reviews (default pending, or by filter)
 export const getAdminReviews = async (req, res) => {
   try {
