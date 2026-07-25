@@ -12,7 +12,7 @@
 
     // Path Alias
     "paths": {
-      "@/*": ["./src/*"]
+      "@src/*": ["./src/*"]
     },
 
     // Other Outputs
