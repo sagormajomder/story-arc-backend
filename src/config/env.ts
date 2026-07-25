@@ -1,3 +1,4 @@
+import logger from '@src/utils/logger.js';
 import z from 'zod';
 
 const envSchema = z.object({
@@ -46,7 +47,7 @@ const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
   const errors = result.error.issues;
-  console.log(errors);
+  logger.fatal({ errors }, 'Zod validation failed');
   process.exit(1);
 }
 
