@@ -31,7 +31,7 @@ const envSchema = z.object({
     .string({
       error: iss =>
         iss.input === undefined
-          ? 'Mongodb uriis required'
+          ? 'Mongodb uri is required'
           : 'Mongodb uri must be a string type',
     })
     .trim()

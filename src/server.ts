@@ -1,8 +1,10 @@
+import app from '@src/app.js';
+import connectDB from '@src/config/db.js';
+import env from '@src/config/env.js';
+import logger from '@src/utils/logger.js';
+import mongoose from 'mongoose';
 import type { Server } from 'node:http';
-import app from './app.js';
-import env from './config/env.js';
 import { SERVER_SHUTDOWN_TIMEOUT } from './utils/constants.js';
-import logger from './utils/logger.js';
 
 const port: number = env.PORT;
 let server: Server;
@@ -12,7 +14,7 @@ async function gracefulShutdown(signal: string): Promise<void> {
   if (isShuttingDown) return;
   isShuttingDown = true;
   let hasError = false;
-  logger.info(`Signal ${signal} received. Shutting down gracefully...`);
+  logger.info(`Signal "${signal}" received. Shutting down gracefully...`);
 
   // force timer out
   const forceExitTimer = setTimeout(function () {
@@ -36,6 +38,16 @@ async function gracefulShutdown(signal: string): Promise<void> {
     hasError = true;
   }
 
+  try {
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.connection.close();
+      logger.info('Mongodb connection is closed successfully');
+    }
+  } catch (err) {
+    logger.error({ err }, 'Error during Database closing:');
+    hasError = true;
+  }
+  logger.info('Server shutdown completed!');
   process.exit(hasError ? 1 : 0);
 }
 
@@ -45,9 +57,7 @@ process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 process.once(
   'unhandledRejection',
   (reason: unknown, promise: Promise<unknown>) => {
-    logger.error(
-      `UNHANDLE REJECTION occurs at ${promise} , reason: ${reason} `,
-    );
+    logger.error({ reason, promise }, 'UNHANDLED REJECTION');
     gracefulShutdown('UNHANDLE REJECTION');
   },
 );
@@ -62,13 +72,15 @@ function handleServerError(error: NodeJS.ErrnoException) {
     logger.fatal({ port }, `Port ${port} is already in use`);
   } else if (error.code === 'EACCES') {
     logger.fatal({ port }, `Permission denied for port ${port} `);
+  } else {
+    logger.fatal({ error }, 'Server encountered a fatal error');
   }
 
-  logger.fatal({ error }, 'Server encountered a fatal error');
   process.exit(1);
 }
 
 async function startServer(): Promise<void> {
+  await connectDB();
   server = app.listen(port, () => {
     logger.info(
       {
@@ -80,8 +92,8 @@ async function startServer(): Promise<void> {
       'Server is started',
     );
     logger.info(`🚀 Server is running at http://localhost:${port}`);
-    logger.info(`📝 API: http://localhost:${port}/v1/api`);
-    logger.info(`❤️  Health: http://localhost:${port}/v1/api/health`);
+    logger.info(`📝 API: http://localhost:${port}/api/v1`);
+    logger.info(`❤️  Health: http://localhost:${port}/api/v1/health`);
   });
 
   server.on('error', handleServerError);
