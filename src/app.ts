@@ -75,6 +75,13 @@ app.use(pinoHttpLogger);
 // Routes
 // ////////////////////////////
 
+app.get('/', (_req, res) => {
+  res.status(200).json({
+    success: true,
+    message: 'Hello World',
+  });
+});
+
 // 404 handler
 app.use((_req: Request, res: Response) => {
   res.status(404).json({
