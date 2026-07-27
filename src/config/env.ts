@@ -46,8 +46,10 @@ const envSchema = z.object({
 const result = envSchema.safeParse(process.env);
 
 if (!result.success) {
-  const errors = result.error.issues;
-  logger.fatal({ errors }, 'Zod validation failed');
+  const errors = result.error.issues
+    .map(iss => `  •  ${iss.path.join('.')}: ${iss.message}`)
+    .join('\n');
+  logger.fatal(`❌ Invalid environment variables: \n${errors}\n`);
   process.exit(1);
 }
 
