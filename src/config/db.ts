@@ -1,5 +1,5 @@
 import env from '@src/config/env.js';
-import logger from '@src/utils/logger.js';
+import logger from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';
 
 const isProduction = env.NODE_ENV === 'production';
