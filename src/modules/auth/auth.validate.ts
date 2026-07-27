@@ -61,7 +61,7 @@ export const registerSchema = z.object({
       .string()
       .trim()
       .pipe(z.url({ error: 'Profile image must be a valid URL' }))
-      .default('https://i.ibb.co.com/fzYGmQj8/avatar-placeholder.gif'),
+      .default(VALIDATIONS.DEFAULT_PROFILE_IMAGE),
   }),
 });
 

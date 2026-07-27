@@ -6,6 +6,7 @@ export const VALIDATIONS = {
   EMAIL_REGEX_PATTERN:
     /^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i,
   PASSWORD_HASH_SALT_ROUNDS: 10,
+  DEFAULT_PROFILE_IMAGE: 'https://i.ibb.co.com/fzYGmQj8/avatar-placeholder.gif',
 };
 
 export const HTTP_STATUS = {
