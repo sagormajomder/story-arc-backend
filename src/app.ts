@@ -1,3 +1,4 @@
+import indexRouter from '@src/routes/index.routes.js';
 import { globalLimiter } from '@src/shared/utils/limiter.js';
 import { pinoHttpLogger } from '@src/shared/utils/logger.js';
 import cookieParser from 'cookie-parser';
@@ -45,6 +46,9 @@ app.get('/', (_req, res) => {
     message: 'Hello World',
   });
 });
+
+// index route
+app.use('/api/v1', indexRouter);
 
 // 404 handler
 app.use((_req: Request, res: Response) => {
