@@ -1,49 +1,13 @@
-import logger from '@src/utils/logger.js';
+import { globalLimiter } from '@src/utils/limiter.js';
+import { pinoHttpLogger } from '@src/utils/logger.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import type { Request, Response } from 'express';
 import express from 'express';
-import rateLimit, { MINUTE } from 'express-rate-limit';
 import helmet from 'helmet';
 import hpp from 'hpp';
-import { pinoHttp } from 'pino-http';
 
 const app = express();
-
-const globalLimiter = rateLimit({
-  windowMs: 15 * MINUTE,
-  limit: 100,
-  standardHeaders: 'draft-8',
-  legacyHeaders: false,
-  message: {
-    success: false,
-    message:
-      'Too many requests from this IP, please try again after 15 minutes.',
-  },
-});
-
-const pinoHttpLogger = pinoHttp({
-  logger,
-  autoLogging: {
-    ignore: req => req.url === '/api/v1/health',
-  },
-  customLogLevel: (_req, res, err) => {
-    if (res.statusCode >= 500 || err) return 'error';
-    if (res.statusCode >= 400) return 'warn';
-    return 'info';
-  },
-  serializers: {
-    req: req => ({
-      id: req.id,
-      method: req.method,
-      url: req.url,
-      query: req.query,
-    }),
-    res: res => ({
-      statusCode: res.statusCode,
-    }),
-  },
-});
 
 // Health Check
 app.get('/api/v1/health', (_req: Request, res: Response) => {
