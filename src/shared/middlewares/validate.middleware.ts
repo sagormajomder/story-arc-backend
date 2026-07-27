@@ -1,3 +1,4 @@
+import logger from '@src/shared/utils/logger.js';
 import type { NextFunction, Request, Response } from 'express';
 import type { ZodObject } from 'zod';
 
@@ -10,6 +11,11 @@ function validate(schema: ZodObject) {
     });
 
     if (!result.success) {
+      const errors = result.error.issues
+        .map(iss => `  •  ${iss.path.join('.')}: ${iss.message}`)
+        .join('\n');
+
+      logger.error(`❌ Data validation failed: \n${errors}\n`);
       return next(result.error);
     }
 
