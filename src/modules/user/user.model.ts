@@ -1,9 +1,10 @@
-import type { IUser } from '@src/modules/user/user.types.js';
 import { VALIDATIONS } from '@src/shared/utils/constants.js';
 import bcrypt from 'bcryptjs';
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
-const userSchema = new mongoose.Schema<IUser>(
+import type { IUserDocuments } from './user.types.js';
+
+const userSchema = new mongoose.Schema<IUserDocuments>(
   {
     fullName: {
       type: String,
@@ -46,14 +47,6 @@ const userSchema = new mongoose.Schema<IUser>(
   {
     timestamps: true,
     versionKey: false,
-    toJSON: {
-      transform(_doc: Document, ret: Record<string, any>) {
-        ret.id = ret._id.toString();
-        delete ret._id;
-        delete ret.password;
-        return ret;
-      },
-    },
   },
 );
 
@@ -72,7 +65,5 @@ userSchema.pre('save', async function () {
   );
 });
 
-const User: Model<IUser> =
-  mongoose.models.User || mongoose.model<IUser>('User', userSchema);
-
-export default User;
+export const User: Model<IUserDocuments> =
+  mongoose.models.User || mongoose.model<IUserDocuments>('User', userSchema);
