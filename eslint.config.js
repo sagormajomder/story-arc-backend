@@ -3,6 +3,21 @@ import js from '@eslint/js';
 import boundaries from 'eslint-plugin-boundaries';
 import tseslint from 'typescript-eslint';
 
+const el = type => ({ element: { type } });
+
+const elements = [
+  { type: 'auth', pattern: 'src/modules/auth/**' },
+  { type: 'user', pattern: 'src/modules/user/**' },
+];
+
+const dependencyPolicies = [
+  { from: el('auth'), allow: [el('user')] },
+  { from: el('user'), allow: [] },
+  {
+    to: [el('auth'), el('user')],
+    allow: [{ to: { element: { fileInternalPath: '*index.ts' } } }],
+  },
+];
 export default tseslint.config(
   js.configs.recommended,
   ...tseslint.configs.recommended,
@@ -11,32 +26,14 @@ export default tseslint.config(
     plugins: { boundaries },
     settings: {
       'import/resolver': {
-        typescript: {
-          project: './tsconfig.json',
-        },
+        typescript: { project: './tsconfig.json' },
       },
-      'boundaries/elements': [
-        { type: 'auth', pattern: 'src/modules/auth/*' },
-        { type: 'user', pattern: 'src/modules/user/*' },
-      ],
+      'boundaries/elements': elements,
     },
     rules: {
-      'boundaries/element-types': [
+      'boundaries/dependencies': [
         'error',
-        {
-          default: 'disallow',
-          rules: [
-            { from: ['auth'], allow: ['user'] },
-            { from: ['user'], allow: [] },
-          ],
-        },
-      ],
-      'boundaries/entry-point': [
-        'error',
-        {
-          default: 'disallow',
-          rules: [{ target: ['auth', 'user'], allow: 'index.ts' }],
-        },
+        { default: 'disallow', policies: dependencyPolicies },
       ],
     },
   },
