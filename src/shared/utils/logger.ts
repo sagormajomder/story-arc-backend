@@ -3,12 +3,10 @@ import { pinoHttp } from 'pino-http';
 
 const isProduction: boolean = process.env.NODE_ENV === 'production';
 
-const logger = pino({
+export const logger = pino({
   level: !isProduction ? 'debug' : 'info',
   ...(!isProduction && { transport: { target: 'pino-pretty' } }),
 });
-
-export default logger;
 
 export const pinoHttpLogger = pinoHttp({
   logger,

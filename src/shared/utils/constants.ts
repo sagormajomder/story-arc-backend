@@ -4,7 +4,7 @@ export const VALIDATIONS = {
   PASSWORD_MIN_LENGTH: 8,
   PASSWORD_MAX_LENGTH: 100,
   EMAIL_REGEX_PATTERN:
-    /^(?!\.)(?!.*\.\.)([a-z0-9_'+\-\.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}$/i,
+    /^(?!\.)(?!.*\.\.)([a-z0-9_'+\-.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9.-]*\.)+[a-z]{2,}$/i,
   PASSWORD_HASH_SALT_ROUNDS: 10,
   DEFAULT_PROFILE_IMAGE: 'https://i.ibb.co.com/fzYGmQj8/avatar-placeholder.gif',
 };
