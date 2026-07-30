@@ -1,5 +1,5 @@
-import type { IUser } from '@src/modules/user/user.types.js';
-import { VALIDATIONS } from '@src/shared/utils/constants.js';
+import type { IUser } from '@/src/modules/user/user.types.js';
+import { VALIDATIONS } from '@/src/shared/utils/constants.js';
 import bcrypt from 'bcryptjs';
 import mongoose, { Document, Model } from 'mongoose';
 

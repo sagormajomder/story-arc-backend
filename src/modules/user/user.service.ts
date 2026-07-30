@@ -1,13 +1,13 @@
 import type {
   IUser,
   IUserClientResponse,
-} from '@src/modules/user/user.types.js';
+} from '@/src/modules/user/user.types.js';
 
 import {
   type IUserRepository,
   userRepository,
-} from '@src/modules/user/user.repository.js';
-import { excludeFields } from '@src/shared/utils/excludeFields.js';
+} from '@/src/modules/user/user.repository.js';
+import { excludeFields } from '@/src/shared/utils/excludeFields.js';
 
 class UserService {
   #repo: IUserRepository;

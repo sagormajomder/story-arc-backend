@@ -1,4 +1,4 @@
-import { VALIDATIONS } from '@src/shared/utils/constants.js';
+import { VALIDATIONS } from '@/src/shared/utils/constants.js';
 import z from 'zod';
 
 export const registerSchema = z.object({

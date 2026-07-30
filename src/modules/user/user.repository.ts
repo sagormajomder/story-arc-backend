@@ -1,8 +1,8 @@
-import { User } from '@src/modules/user/user.model.js';
+import { User } from '@/src/modules/user/user.model.js';
 import type {
   IUser,
   IUserPlainDBResponse,
-} from '@src/modules/user/user.types.js';
+} from '@/src/modules/user/user.types.js';
 
 export interface IUserRepository {
   create(userData: IUser): Promise<IUserPlainDBResponse>;

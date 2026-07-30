@@ -1,6 +1,6 @@
-import indexRouter from '@src/routes/index.routes.js';
-import { globalLimiter } from '@src/shared/utils/limiter.js';
-import { pinoHttpLogger } from '@src/shared/utils/logger.js';
+import indexRouter from '@/src/routes/index.routes.js';
+import { globalLimiter } from '@/src/shared/utils/limiter.js';
+import { pinoHttpLogger } from '@/src/shared/utils/logger.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import type { Request, Response } from 'express';
