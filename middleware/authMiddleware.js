@@ -7,7 +7,8 @@ export const verifyToken = (req, res, next) => {
     return res.status(401).send({ message: 'Unauthorized access' });
   }
   const token = req.headers.authorization.split(' ')[1];
-  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+  const jwtSecret = process.env.JWT_ACCESS_SECRET;
+  jwt.verify(token, jwtSecret, (err, decoded) => {
     if (err) {
       console.error('Middleware: JWT Verification Failed:', err.message);
       return res

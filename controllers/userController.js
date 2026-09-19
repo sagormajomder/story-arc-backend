@@ -55,10 +55,11 @@ export const loginUser = async (req, res) => {
     const { password: _, ...userWithoutPassword } = user;
 
     // Generate JWT Token
+    const jwtSecret = process.env.JWT_ACCESS_SECRET;
     const token = jwt.sign(
       { email: user.email, role: user.role, id: user._id },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '1h' }
+      jwtSecret,
+      { expiresIn: '1h' },
     );
 
     // Return user info and token
@@ -93,14 +94,15 @@ export const googleLogin = async (req, res) => {
       });
 
       // Generate JWT Token
+      const jwtSecret = process.env.JWT_ACCESS_SECRET;
       const token = jwt.sign(
         {
           email: createdUser.email,
           role: createdUser.role,
           id: createdUser._id,
         },
-        process.env.ACCESS_TOKEN_SECRET,
-        { expiresIn: '1h' }
+        jwtSecret,
+        { expiresIn: '1h' },
       );
 
       return res.status(200).json({ ...createdUser, token });
@@ -108,10 +110,11 @@ export const googleLogin = async (req, res) => {
 
     // Return existing user with token
     // Generate JWT Token
+    const jwtSecret = process.env.JWT_ACCESS_SECRET;
     const token = jwt.sign(
       { email: user.email, role: user.role, id: user._id },
-      process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: '1h' }
+      jwtSecret,
+      { expiresIn: '1h' },
     );
     // console.log(user);
     res.status(200).json({ ...user, token });
@@ -171,7 +174,7 @@ export const updateUserRole = async (req, res) => {
 
     const result = await collections.users.updateOne(
       { _id: new ObjectId(id) },
-      { $set: { role } }
+      { $set: { role } },
     );
 
     if (result.matchedCount === 0) {
@@ -185,9 +188,6 @@ export const updateUserRole = async (req, res) => {
       .status(500)
       .json({ message: 'Error updating user role', error: error.message });
   }
-  res
-    .status(500)
-    .json({ message: 'Error updating user role', error: error.message });
 };
 
 export const getUserById = async (req, res) => {
@@ -234,7 +234,7 @@ export const addToShelf = async (req, res) => {
           $set: {
             'shelf.$.status': status,
           },
-        }
+        },
       );
       return res.status(200).json({ message: 'Book status updated' });
     }
@@ -251,7 +251,7 @@ export const addToShelf = async (req, res) => {
 
     const result = await collections.users.updateOne(
       { _id: new ObjectId(id) },
-      { $push: { shelf: newItem } }
+      { $push: { shelf: newItem } },
     );
 
     res.status(200).json({ message: 'Book added to shelf successfully' });
@@ -294,7 +294,7 @@ export const updateShelfProgress = async (req, res) => {
 
     const result = await collections.users.updateOne(
       { _id: new ObjectId(id), 'shelf.bookId': bookId },
-      { $set: updateFields }
+      { $set: updateFields },
     );
 
     if (result.matchedCount === 0) {
@@ -318,7 +318,7 @@ export const getUserStats = async (req, res) => {
     const shelf = user.shelf || [];
     const readBooks = shelf.filter(
       item =>
-        item.status === 'Read' || (typeof item === 'string' ? false : false)
+        item.status === 'Read' || (typeof item === 'string' ? false : false),
     );
 
     // Books Read This Year
@@ -331,7 +331,7 @@ export const getUserStats = async (req, res) => {
     // Total Pages Read (Accumulate progress)
     const totalPagesRead = shelf.reduce(
       (acc, item) => acc + (item.progress || 0),
-      0
+      0,
     );
 
     // Total Finish Books
@@ -347,7 +347,7 @@ export const getUserStats = async (req, res) => {
     const totalUserRatings = userReviews.length;
     const sumUserRatings = userReviews.reduce(
       (acc, review) => acc + (review.rating || 0),
-      0
+      0,
     );
     const averageRating =
       totalUserRatings > 0 ? (sumUserRatings / totalUserRatings).toFixed(1) : 0;
@@ -391,7 +391,7 @@ export const updateReadingGoal = async (req, res) => {
           'readingGoal.target': parseInt(target),
           'readingGoal.year': currentYear,
         },
-      }
+      },
     );
     res.status(200).json({ message: 'Goal updated' });
   } catch (error) {
@@ -407,7 +407,7 @@ export const getRecommendations = async (req, res) => {
 
     const shelf = user.shelf || [];
     const shelvedBookIds = shelf.map(item =>
-      typeof item === 'string' ? new ObjectId(item) : new ObjectId(item.bookId)
+      typeof item === 'string' ? new ObjectId(item) : new ObjectId(item.bookId),
     );
 
     // 1. Get User Genres from Read books

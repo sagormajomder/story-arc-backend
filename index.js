@@ -1,6 +1,7 @@
 import cors from 'cors';
 import express from 'express';
-import { connectDB } from './config/db.js';
+import { closeDB, connectDB } from './config/db.js';
+import { errorHandler, notFoundHandler } from './middleware/errorMiddleware.js';
 import bookRoutes from './routes/bookRoutes.js';
 import dashboardRoutes from './routes/dashboardRoutes.js';
 import genreRoutes from './routes/genreRoutes.js';
@@ -8,14 +9,16 @@ import reviewRoutes from './routes/reviewRoutes.js';
 import tutorialRoutes from './routes/tutorialRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 
-import dns from 'node:dns';
-dns.setServers(['1.1.1.1', '1.0.0.1']);
-
 const app = express();
 const port = process.env.PORT || 5000;
 
 // Middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: ['http://localhost:3000', 'https://story-arc-sm.vercel.app'],
+    credentials: true,
+  }),
+);
 app.use(express.json());
 
 // Server Root Route
@@ -31,12 +34,37 @@ app.use('/api/v1/tutorials', tutorialRoutes);
 app.use('/api/v1/reviews', reviewRoutes);
 app.use('/api/v1/dashboard', dashboardRoutes);
 
-async function run() {
+app.use(notFoundHandler);
+app.use(errorHandler);
+
+// Crash / Unhandled Error Listeners
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  if (!process.env.VERCEL) process.exit(1);
+});
+
+process.on('uncaughtException', err => {
+  console.error('Uncaught Exception thrown:', err);
+  if (!process.env.VERCEL) process.exit(1);
+});
+
+// Vercel serverless export
+export default app;
+
+// Local Development only: Bind port and handle terminal graceful shutdown (Ctrl + C)
+if (!process.env.VERCEL) {
   await connectDB();
 
   app.listen(port, () => {
     console.log(`Server is running at http://localhost:${port}`);
   });
-}
 
-run().catch(console.dir);
+  const handleLocalShutdown = async signal => {
+    console.log(`Received ${signal}. Shutting down local server cleanly...`);
+    await closeDB();
+    process.exit(0);
+  };
+
+  process.on('SIGINT', () => handleLocalShutdown('SIGINT'));
+  process.on('SIGTERM', () => handleLocalShutdown('SIGTERM'));
+}

@@ -21,7 +21,7 @@ The dedicated backend server for Story Arc, handling authentication, data manage
 
 ### Tools
 
-- **Nodemon**: For development workflow
+- **Vercel**: For deployment
 
 ## Key Features
 
@@ -48,7 +48,7 @@ The dedicated backend server for Story Arc, handling authentication, data manage
 3. **Install dependencies**
 
    ```bash
-   npm install
+   npm install or pnpm install
    ```
 
 4. **Set up Environment Variables**
@@ -56,20 +56,66 @@ The dedicated backend server for Story Arc, handling authentication, data manage
 
    ```env
    PORT=8000
-   DB_URI=<your-mongodb-connection-string>
-   ACCESS_TOKEN_SECRET=<your-secret>
+   MONGODB_URI=<your-mongodb-connection-string>
+   JWT_ACCESS_SECRET=<your-secret>
    ```
 
 5. **Run the server**
    ```bash
-   npm run dev
+   npm run dev or pnpm dev
    ```
 
 ## API Endpoints
 
-- **Books**: `GET /api/v1/books`, `POST /api/v1/books`
-- **Reviews**: `GET /api/v1/reviews/admin/all`, `POST /api/v1/reviews`
-- **Dashboard**: `GET /api/v1/dashboard/stats`, `GET /api/v1/dashboard/charts`
+### Users
+
+- `POST /api/v1/users`
+- `POST /api/v1/users/login`
+- `POST /api/v1/users/google`
+- `GET /api/v1/users`
+- `GET /api/v1/users/:id`
+- `PATCH /api/v1/users/:id/role`
+- `POST /api/v1/users/:id/shelf`
+- `PATCH /api/v1/users/:id/shelf/:bookId`
+- `GET /api/v1/users/:id/stats`
+- `GET /api/v1/users/:id/recommendations`
+- `POST /api/v1/users/:id/goal`
+
+### Books
+
+- `GET /api/v1/books/genres`
+- `GET /api/v1/books`
+- `GET /api/v1/books/:id`
+- `POST /api/v1/books`
+- `PUT /api/v1/books/:id`
+- `DELETE /api/v1/books/:id`
+
+### Genres
+
+- `GET /api/v1/genres`
+- `POST /api/v1/genres`
+- `PUT /api/v1/genres/:id`
+- `DELETE /api/v1/genres/:id`
+
+### Tutorials
+
+- `GET /api/v1/tutorials`
+- `POST /api/v1/tutorials`
+- `PUT /api/v1/tutorials/:id`
+- `DELETE /api/v1/tutorials/:id`
+
+### Reviews
+
+- `GET /api/v1/reviews/:bookId`
+- `POST /api/v1/reviews`
+- `GET /api/v1/reviews/admin/all`
+- `PATCH /api/v1/reviews/:id/approve`
+- `DELETE /api/v1/reviews/:id`
+
+### Dashboard
+
+- `GET /api/v1/dashboard/stats`
+- `GET /api/v1/dashboard/charts`
 
 ## Connect with Me
 
