@@ -26,7 +26,7 @@ mongoose.connection.on('error', (err: Error) => {
   logger.error({ message: err.message }, '📛 MongoDB connection error:');
 });
 
-async function connectDB(): Promise<void> {
+export async function connectDB(): Promise<void> {
   if (mongoose.connection.readyState === 1) return;
   try {
     const conn = await mongoose.connect(env.MONGODB_URI, {
@@ -45,5 +45,3 @@ async function connectDB(): Promise<void> {
     throw err;
   }
 }
-
-export default connectDB;

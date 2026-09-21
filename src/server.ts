@@ -1,5 +1,5 @@
 import app from '@src/app.js';
-import connectDB from '@src/config/db.js';
+import { connectDB } from '@src/config/db.js';
 import { env } from '@src/config/env.js';
 
 import { logger } from '@src/shared/utils/logger.js';

@@ -1,6 +1,6 @@
+import { pinoHttpLogger } from '@src/config/httpLogger.js';
+import { globalLimiter } from '@src/config/rateLimit.js';
 import indexRouter from '@src/routes/index.routes.js';
-import { globalLimiter } from '@src/shared/utils/limiter.js';
-import { pinoHttpLogger } from '@src/shared/utils/logger.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import type { Request, Response } from 'express';
@@ -39,13 +39,6 @@ app.use(pinoHttpLogger);
 // ////////////////////////////
 // Routes
 // ////////////////////////////
-// Root Route
-app.get('/', (_req, res) => {
-  res.status(200).json({
-    success: true,
-    message: 'Hello World',
-  });
-});
 
 // index route
 app.use('/api/v1', indexRouter);
