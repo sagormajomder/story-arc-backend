@@ -1,6 +1,10 @@
-import env from '@src/config/env.js';
+import { env } from '@src/config/env.js';
 import { logger } from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';
+
+const SERVER_SELECTION_TIMEOUT_MS = 5_000;
+const SOCKET_TIMEOUT_MS = 45_000;
+const HEARTBEAT_FREQUENCY_MS = 10_000;
 
 const isProduction = env.NODE_ENV === 'production';
 
@@ -29,9 +33,9 @@ async function connectDB(): Promise<void> {
       autoIndex: !isProduction,
       maxPoolSize: isProduction ? 50 : 20,
       minPoolSize: isProduction ? 10 : 2,
-      serverSelectionTimeoutMS: 5_000,
-      socketTimeoutMS: 45_000,
-      heartbeatFrequencyMS: 10_000,
+      serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
+      socketTimeoutMS: SOCKET_TIMEOUT_MS,
+      heartbeatFrequencyMS: HEARTBEAT_FREQUENCY_MS,
       ...(isProduction && { w: 'majority' }),
     });
 

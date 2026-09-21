@@ -53,6 +53,4 @@ if (!result.success) {
   process.exit(1);
 }
 
-const env = Object.freeze(result.data);
-
-export default env;
+export const env = Object.freeze(result.data);

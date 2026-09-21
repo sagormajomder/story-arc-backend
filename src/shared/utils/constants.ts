@@ -23,5 +23,3 @@ export const HTTP_STATUS = {
   INTERNAL_SERVER_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,
 } as const;
-
-export const SERVER_SHUTDOWN_TIMEOUT = 5000;

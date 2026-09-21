@@ -2,7 +2,7 @@ import { logger } from '@src/shared/utils/logger.js';
 import type { NextFunction, Request, Response } from 'express';
 import type { ZodObject } from 'zod';
 
-function validate(schema: ZodObject) {
+export function validate(schema: ZodObject) {
   return async function (req: Request, _res: Response, next: NextFunction) {
     const result = await schema.safeParseAsync({
       body: req.body,
@@ -35,4 +35,3 @@ function validate(schema: ZodObject) {
     return next();
   };
 }
-export default validate;

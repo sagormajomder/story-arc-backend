@@ -1,10 +1,14 @@
 import app from '@src/app.js';
 import connectDB from '@src/config/db.js';
-import env from '@src/config/env.js';
-import { SERVER_SHUTDOWN_TIMEOUT } from '@src/shared/utils/constants.js';
+import { env } from '@src/config/env.js';
+
 import { logger } from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';
 import type { Server } from 'node:http';
+
+const SERVER_SHUTDOWN_TIMEOUT_MS = 5000;
+const KEEP_ALIVE_TIMEOUT_MS = 65_000;
+const HEADERS_TIMEOUT_MS = KEEP_ALIVE_TIMEOUT_MS + 1_000;
 
 const port: number = env.PORT;
 let server: Server;
@@ -19,10 +23,10 @@ async function gracefulShutdown(signal: string): Promise<void> {
   // force timer out
   const forceExitTimer = setTimeout(function () {
     logger.fatal(
-      `Shutdown time ${SERVER_SHUTDOWN_TIMEOUT} passed. Forcefully shutting down the server`,
+      `Shutdown time ${SERVER_SHUTDOWN_TIMEOUT_MS} passed. Forcefully shutting down the server`,
     );
     process.exit(1);
-  }, SERVER_SHUTDOWN_TIMEOUT);
+  }, SERVER_SHUTDOWN_TIMEOUT_MS);
   forceExitTimer.unref();
 
   try {
@@ -98,8 +102,8 @@ async function startServer(): Promise<void> {
 
   server.on('error', handleServerError);
 
-  server.keepAliveTimeout = 65_000;
-  server.headersTimeout = 66_000;
+  server.keepAliveTimeout = KEEP_ALIVE_TIMEOUT_MS;
+  server.headersTimeout = HEADERS_TIMEOUT_MS;
 }
 
 try {
