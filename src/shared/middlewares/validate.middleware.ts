@@ -1,4 +1,4 @@
-import { logger } from '@/src/shared/utils/logger.js';
+import { logger } from '@src/shared/utils/logger.js';
 import type { NextFunction, Request, Response } from 'express';
 import type { ZodObject } from 'zod';
 

@@ -1,4 +1,4 @@
-import { logger } from '@/src/shared/utils/logger.js';
+import { logger } from '@src/shared/utils/logger.js';
 import z from 'zod';
 
 const envSchema = z.object({

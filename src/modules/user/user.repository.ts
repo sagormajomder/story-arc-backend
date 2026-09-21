@@ -1,9 +1,11 @@
-import { User } from '@/src/modules/user/user.model.js';
-import type { IUser, IUserPlain } from '@/src/modules/user/user.types.js';
-import { toPlainObject } from '@/src/shared/utils/toPlainObject.js';
+import { User } from '@src/modules/user/user.model.js';
+import type {
+  IUser,
+  IUserPlainDBResponse,
+} from '@src/modules/user/user.types.js';
 
 export interface IUserRepository {
-  create(userData: IUser): Promise<IUserPlain>;
+  create(userData: IUser): Promise<IUserPlainDBResponse>;
 }
 
 class UserRepository implements IUserRepository {
@@ -12,9 +14,9 @@ class UserRepository implements IUserRepository {
     this.#model = userModel;
   }
 
-  async create(userData: IUser): Promise<IUserPlain> {
+  async create(userData: IUser): Promise<IUserPlainDBResponse> {
     const userDoc = await this.#model.create(userData);
-    return toPlainObject<IUserPlain>(userDoc);
+    return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 }
 

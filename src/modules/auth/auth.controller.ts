@@ -1,6 +1,6 @@
-import type { RegisterInput } from '@/src/modules/auth/auth.validate.js';
-import { userService } from '@/src/modules/user/user.index.js';
-import asyncCatch from '@/src/shared/utils/asyncCatch.js';
+import type { RegisterInput } from '@src/modules/auth/auth.validate.js';
+import { userService } from '@src/modules/user/user.index.js';
+import asyncCatch from '@src/shared/utils/asyncCatch.js';
 import type { Request, Response } from 'express';
 
 export const registerUserCntlr = asyncCatch(

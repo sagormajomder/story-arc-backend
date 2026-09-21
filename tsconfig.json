@@ -1,6 +1,6 @@
 {
   "compilerOptions": {
-    "rootDir": "./",
+    "rootDir": "./src",
     "outDir": "./dist",
 
     // Environment Settings
@@ -12,7 +12,7 @@
 
     // Path Alias
     "paths": {
-      "@/*": ["./*"]
+      "@src/*": ["./src/*"]
     },
 
     // Other Outputs
@@ -40,6 +40,6 @@
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true
   },
-  "include": ["server.ts", "src/**/*.ts"],
+  "include": ["src/**/*.ts"],
   "exclude": ["node_modules", "dist", "**/*.test.ts"]
 }

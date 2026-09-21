@@ -1,5 +1,5 @@
-import { logger } from '@/src/shared/utils/logger.js';
-import type { asyncCatchFn } from '@/src/shared/utils/types.js';
+import { logger } from '@src/shared/utils/logger.js';
+import type { asyncCatchFn } from '@src/shared/utils/types.js';
 import type { NextFunction, Request, Response } from 'express';
 
 function asyncCatch(fn: asyncCatchFn): asyncCatchFn {

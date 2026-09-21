@@ -1,8 +1,8 @@
-import app from '@/src/app.js';
-import connectDB from '@/src/config/db.js';
-import env from '@/src/config/env.js';
-import { SERVER_SHUTDOWN_TIMEOUT } from '@/src/shared/utils/constants.js';
-import { logger } from '@/src/shared/utils/logger.js';
+import app from '@src/app.js';
+import connectDB from '@src/config/db.js';
+import env from '@src/config/env.js';
+import { SERVER_SHUTDOWN_TIMEOUT } from '@src/shared/utils/constants.js';
+import { logger } from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';
 import type { Server } from 'node:http';
 
