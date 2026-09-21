@@ -1,12 +1,8 @@
-import type {
-  IUser,
-  IUserClientResponse,
-} from '@/src/modules/user/user.types.js';
-
 import {
   type IUserRepository,
   userRepository,
 } from '@/src/modules/user/user.repository.js';
+import type { IUser, IUserResponse } from '@/src/modules/user/user.types.js';
 import { excludeFields } from '@/src/shared/utils/excludeFields.js';
 
 class UserService {
@@ -15,7 +11,7 @@ class UserService {
     this.#repo = userRepo;
   }
 
-  async registerUser(userData: IUser): Promise<{ user: IUserClientResponse }> {
+  async registerUser(userData: IUser): Promise<{ user: IUserResponse }> {
     const user = await this.#repo.create(userData);
     const userWithoutPassword = excludeFields(user, ['password']);
     return {

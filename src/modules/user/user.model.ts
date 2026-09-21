@@ -1,9 +1,8 @@
-import type { IUser } from '@/src/modules/user/user.types.js';
-import { VALIDATIONS } from '@/src/shared/utils/constants.js';
 import bcrypt from 'bcryptjs';
-import mongoose, { Document, Model } from 'mongoose';
+import mongoose, { Model } from 'mongoose';
 
-interface IUserDocuments extends IUser, Document {}
+import { VALIDATIONS } from '@/src/shared/utils/constants.js';
+import type { IUserDocuments } from './user.types.js';
 
 const userSchema = new mongoose.Schema<IUserDocuments>(
   {
@@ -48,16 +47,6 @@ const userSchema = new mongoose.Schema<IUserDocuments>(
   {
     timestamps: true,
     versionKey: false,
-    toObject: {
-      transform(_doc: Document, ret: Record<string, unknown>) {
-        if (ret._id) {
-          ret.id = ret._id.toString();
-        }
-        delete ret._id;
-        delete ret.__v;
-        return ret;
-      },
-    },
   },
 );
 

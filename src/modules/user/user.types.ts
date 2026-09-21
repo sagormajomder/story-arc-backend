@@ -1,3 +1,5 @@
+import { Document } from 'mongoose';
+
 export interface IUser {
   fullName: string;
   email: string;
@@ -5,10 +7,12 @@ export interface IUser {
   profileImage: string;
 }
 
-export interface IUserPlainDBResponse extends IUser {
+export interface IUserDocuments extends IUser, Document {}
+
+export interface IUserPlain extends IUser {
   id: string;
   createdAt: Date;
   updatedAt: Date;
 }
 
-export type IUserClientResponse = Omit<IUserPlainDBResponse, 'password'>;
+export type IUserResponse = Omit<IUserPlain, 'password'>;
