@@ -1,6 +1,6 @@
 import app from '@src/app.js';
-import { connectDB } from '@src/config/db.js';
 import { env } from '@src/config/env.js';
+import { connectDB } from '@src/shared/database/db.js';
 
 import { logger } from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';

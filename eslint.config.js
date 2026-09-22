@@ -22,8 +22,8 @@ const dependencyMap = {
  * -------------------------------------------------------------
  * Categorizes the project codebase into architectural layers:
  * 1. Feature Modules (e.g. src/modules/auth, src/modules/user)
- * 2. Shared Layer    (common utilities, middlewares, types)
- * 3. Config Layer    (environment variables, database setup)
+ * 2. Shared Layer    (common utilities, middlewares, types, database connection)
+ * 3. Config Layer    (environment variables & validation)
  */
 const elements = [
   ...Object.keys(dependencyMap).map(name => ({
@@ -47,7 +47,7 @@ const elements = [
  * - Inter-module imports are restricted to public entry points (*.index.ts).
  * - Feature modules can consume shared utilities and configuration.
  * - Shared and Config layers cannot depend on feature modules (prevents upward leaks).
- * - Config can consume shared utilities (e.g. logger in db.ts).
+ * - Config layer is self-contained with zero dependencies on internal layers.
  */
 const policies = [
   // 1. Inter-module communication: Only allowed via module entrypoints (*.index.ts)
@@ -76,11 +76,11 @@ const policies = [
     },
   },
 
-  // 4. Config layer is allowed to access shared utilities (e.g. db.ts using logger)
+  // 4. Shared layer is allowed to access configuration (e.g. token service using env)
   {
-    from: { element: { type: 'config' } },
+    from: { element: { type: 'shared' } },
     allow: {
-      to: { element: { type: 'shared' } },
+      to: { element: { type: 'config' } },
     },
   },
 ];

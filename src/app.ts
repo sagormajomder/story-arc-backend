@@ -1,7 +1,7 @@
-import { pinoHttpLogger } from '@src/config/httpLogger.js';
-import { globalLimiter } from '@src/config/rateLimit.js';
 import indexRouter from '@src/routes/index.routes.js';
 import { errorHandler } from '@src/shared/middlewares/error.middleware.js';
+import { pinoHttpLogger } from '@src/shared/middlewares/httpLogger.middleware.js';
+import { globalLimiter } from '@src/shared/middlewares/rateLimit.middleware.js';
 import { HTTP_STATUS } from '@src/shared/utils/constants.js';
 import sendResponse from '@src/shared/utils/sendResponse.js';
 import cookieParser from 'cookie-parser';
