@@ -11,4 +11,4 @@ export interface IUserPlainDBResponse extends IUser {
   updatedAt: Date;
 }
 
-export type IUserClientResponse = Omit<IUserPlainDBResponse, 'password'>;
+export type UserResponseDto = Omit<IUserPlainDBResponse, 'password'>;

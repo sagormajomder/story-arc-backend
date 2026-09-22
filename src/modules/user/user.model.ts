@@ -1,6 +1,5 @@
 import type { IUser } from '@src/modules/user/user.types.js';
 import { VALIDATIONS } from '@src/shared/utils/constants.js';
-import bcrypt from 'bcryptjs';
 import mongoose, { Document, Model } from 'mongoose';
 
 interface IUserDocuments extends IUser, Document {}
@@ -60,21 +59,6 @@ const userSchema = new mongoose.Schema<IUserDocuments>(
     },
   },
 );
-
-userSchema.pre('save', async function () {
-  if (!this.isModified('password')) return;
-
-  if (this.password.length > VALIDATIONS.PASSWORD_MAX_LENGTH) {
-    throw new Error(
-      `Password can't exceed ${VALIDATIONS.PASSWORD_MAX_LENGTH} characters`,
-    );
-  }
-
-  this.password = await bcrypt.hash(
-    this.password,
-    VALIDATIONS.PASSWORD_HASH_SALT_ROUNDS,
-  );
-});
 
 export const User: Model<IUserDocuments> =
   mongoose.models.User || mongoose.model<IUserDocuments>('User', userSchema);

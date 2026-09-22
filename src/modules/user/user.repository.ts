@@ -9,13 +9,10 @@ export interface IUserRepository {
 }
 
 class UserRepository implements IUserRepository {
-  #model;
-  constructor(userModel = User) {
-    this.#model = userModel;
-  }
+  constructor(private readonly model = User) {}
 
   async create(userData: IUser): Promise<IUserPlainDBResponse> {
-    const userDoc = await this.#model.create(userData);
+    const userDoc = await this.model.create(userData);
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 }
