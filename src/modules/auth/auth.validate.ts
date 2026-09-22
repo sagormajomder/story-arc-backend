@@ -65,4 +65,4 @@ export const registerSchema = z.object({
   }),
 });
 
-export type RegisterUserDto = z.infer<typeof registerSchema>['body'];
+export type RegisterDto = z.infer<typeof registerSchema>['body'];

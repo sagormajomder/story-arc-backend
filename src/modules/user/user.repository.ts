@@ -6,6 +6,10 @@ import type {
 
 export interface IUserRepository {
   create(userData: IUser): Promise<IUserPlainDBResponse>;
+  findByEmail(
+    email: string,
+    includePassword?: boolean,
+  ): Promise<IUserPlainDBResponse | null>;
 }
 
 class UserRepository implements IUserRepository {
@@ -13,6 +17,21 @@ class UserRepository implements IUserRepository {
 
   async create(userData: IUser): Promise<IUserPlainDBResponse> {
     const userDoc = await this.model.create(userData);
+    return userDoc.toObject() as unknown as IUserPlainDBResponse;
+  }
+
+  async findByEmail(
+    email: string,
+    includePassword = false,
+  ): Promise<IUserPlainDBResponse | null> {
+    const query = this.model.findOne({ email });
+    if (includePassword) {
+      query.select('+password');
+    }
+    const userDoc = await query.exec();
+    if (!userDoc) {
+      return null;
+    }
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 }
