@@ -1,6 +1,9 @@
 import { pinoHttpLogger } from '@src/config/httpLogger.js';
 import { globalLimiter } from '@src/config/rateLimit.js';
 import indexRouter from '@src/routes/index.routes.js';
+import { errorHandler } from '@src/shared/middlewares/error.middleware.js';
+import { HTTP_STATUS } from '@src/shared/utils/constants.js';
+import sendResponse from '@src/shared/utils/sendResponse.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import type { Request, Response } from 'express';
@@ -12,10 +15,13 @@ const app = express();
 
 // Health Check
 app.get('/api/v1/health', (_req: Request, res: Response) => {
-  res.status(200).json({
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
     success: true,
-    message: 'server is healthy',
-    uptime: process.uptime(),
+    message: 'Server is healthy',
+    data: {
+      uptime: process.uptime(),
+    },
   });
 });
 // ////////////////////////////
@@ -44,11 +50,20 @@ app.use(pinoHttpLogger);
 app.use('/api/v1', indexRouter);
 
 // 404 handler
-app.use((_req: Request, res: Response) => {
-  res.status(404).json({
+app.use((req: Request, res: Response) => {
+  res.status(HTTP_STATUS.NOT_FOUND).json({
     success: false,
     message: 'Route Not Found',
+    errorSources: [
+      {
+        path: req.originalUrl,
+        message: 'API path not found',
+      },
+    ],
   });
 });
+
+// Global error handler
+app.use(errorHandler);
 
 export default app;
