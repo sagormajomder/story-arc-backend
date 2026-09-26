@@ -6,9 +6,7 @@ const SERVER_SELECTION_TIMEOUT_MS = 5_000;
 const SOCKET_TIMEOUT_MS = 45_000;
 const HEARTBEAT_FREQUENCY_MS = 10_000;
 
-const isProduction = env.NODE_ENV === 'production';
-
-mongoose.set('bufferCommands', !isProduction);
+mongoose.set('bufferCommands', env.isDevelopment);
 
 mongoose.connection.on('disconnected', () => {
   logger.warn('🛑 Database is disconnected');
@@ -30,13 +28,13 @@ export async function connectDB(): Promise<void> {
   if (mongoose.connection.readyState === 1) return;
   try {
     const conn = await mongoose.connect(env.MONGODB_URI, {
-      autoIndex: !isProduction,
-      maxPoolSize: isProduction ? 50 : 20,
-      minPoolSize: isProduction ? 10 : 2,
+      autoIndex: env.isDevelopment,
+      maxPoolSize: env.isProduction ? 50 : 20,
+      minPoolSize: env.isProduction ? 10 : 2,
       serverSelectionTimeoutMS: SERVER_SELECTION_TIMEOUT_MS,
       socketTimeoutMS: SOCKET_TIMEOUT_MS,
       heartbeatFrequencyMS: HEARTBEAT_FREQUENCY_MS,
-      ...(isProduction && { w: 'majority' }),
+      ...(env.isProduction && { w: 'majority' }),
     });
 
     logger.info(`Database is connected at ${conn.connection.host}`);

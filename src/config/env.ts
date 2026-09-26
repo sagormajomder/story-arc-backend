@@ -1,3 +1,4 @@
+import ms, { type StringValue } from 'ms';
 import z from 'zod';
 
 // Environment Configuration Constants
@@ -10,6 +11,9 @@ const PORT_RANGE = {
 const DEFAULT_PORT = 5000;
 const DEFAULT_RATE_LIMIT_WINDOW_MINUTES = 15;
 const DEFAULT_RATE_LIMIT_MAX = 100;
+const JWT_SECRET_MIN = 32;
+const DEFAULT_JWT_ACCESS_EXPIRES_IN = '15m';
+const DEFAULT_JWT_REFRESH_EXPIRES_IN = '7d';
 
 // utility fn
 const emptyStringToUndefined = (val: unknown) => {
@@ -21,16 +25,18 @@ const emptyStringToUndefined = (val: unknown) => {
 };
 
 const envSchema = z.object({
-  NODE_ENV: z
-    .string()
-    .trim()
-    .toLowerCase()
-    .pipe(
-      z.enum(NODE_ENV_VALUES, {
-        error: `NODE_ENV must be one of ${NODE_ENV_VALUES.join(', ')}`,
-      }),
-    )
-    .default(DEFAULT_NODE_ENV),
+  NODE_ENV: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string()
+      .toLowerCase()
+      .pipe(
+        z.enum(NODE_ENV_VALUES, {
+          error: `NODE_ENV must be one of ${NODE_ENV_VALUES.join(', ')}`,
+        }),
+      )
+      .default(DEFAULT_NODE_ENV),
+  ),
   PORT: z.preprocess(
     emptyStringToUndefined,
     z.coerce
@@ -42,20 +48,21 @@ const envSchema = z.object({
       })
       .default(DEFAULT_PORT),
   ),
-  MONGODB_URI: z
-    .string({
-      error: iss =>
-        iss.input === undefined
-          ? 'Mongodb uri is required'
-          : 'Mongodb uri must be a string type',
-    })
-    .trim()
-    .min(1, { error: 'MongoDB uri cannot be empty' })
-    .refine(
-      value =>
-        value.startsWith('mongodb://') || value.startsWith('mongodb+srv://'),
-      { error: 'MONGODB_URI must start with mongodb:// or mongodb+srv://' },
-    ),
+  MONGODB_URI: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Mongodb uri is required'
+            : 'Mongodb uri must be a string type',
+      })
+      .refine(
+        value =>
+          value.startsWith('mongodb://') || value.startsWith('mongodb+srv://'),
+        { error: 'MONGODB_URI must start with mongodb:// or mongodb+srv://' },
+      ),
+  ),
   RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
     emptyStringToUndefined,
     z.coerce
@@ -72,6 +79,54 @@ const envSchema = z.object({
       .positive({ error: 'RATE_LIMIT_MAX must be greater than 0' })
       .default(DEFAULT_RATE_LIMIT_MAX),
   ),
+  // openssl rand -base64 32
+  JWT_ACCESS_SECRET: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'JWT_ACCESS_SECRET is required'
+            : 'JWT_ACCESS_SECRET must be a string type',
+      })
+      .min(JWT_SECRET_MIN, {
+        error: `JWT_ACCESS_SECRET must be at least ${JWT_SECRET_MIN} characters`,
+      }),
+  ),
+  JWT_REFRESH_SECRET: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'JWT_REFRESH_SECRET is required'
+            : 'JWT_REFRESH_SECRET must be a string type',
+      })
+      .min(JWT_SECRET_MIN, {
+        error: `JWT_REFRESH_SECRET must be at least ${JWT_SECRET_MIN} characters`,
+      }),
+  ),
+  JWT_ACCESS_EXPIRES_IN: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string({ error: 'JWT_ACCESS_EXPIRES_IN must be a string' })
+      .regex(/^\d+(ms|s|m|h|d|w|y)$/, {
+        error:
+          'JWT_ACCESS_EXPIRES_IN must be a valid duration string like "15m" or "7d"',
+      })
+      .default(DEFAULT_JWT_ACCESS_EXPIRES_IN),
+  ),
+  JWT_REFRESH_EXPIRES_IN: z.preprocess(
+    emptyStringToUndefined,
+
+    z
+      .string({ error: 'JWT_REFRESH_EXPIRES_IN must be a string' })
+      .regex(/^\d+(ms|s|m|h|d|w|y)$/, {
+        error:
+          'JWT_REFRESH_EXPIRES_IN must be a valid duration string like "15m" or "7d"',
+      })
+      .default(DEFAULT_JWT_REFRESH_EXPIRES_IN),
+  ),
 });
 
 const result = envSchema.safeParse(process.env);
@@ -84,4 +139,23 @@ if (!result.success) {
   process.exit(1);
 }
 
-export const env = Object.freeze(result.data);
+const data = result.data;
+
+type ParseEnv = z.infer<typeof envSchema>;
+
+type Env = Readonly<
+  ParseEnv & {
+    COOKIE_ACCESS_TOKEN_MAX_AGE: number;
+    COOKIE_REFRESH_TOKEN_MAX_AGE: number;
+    isDevelopment: boolean;
+    isProduction: boolean;
+  }
+>;
+
+export const env: Env = Object.freeze({
+  ...data,
+  COOKIE_ACCESS_TOKEN_MAX_AGE: ms(data.JWT_ACCESS_EXPIRES_IN as StringValue),
+  COOKIE_REFRESH_TOKEN_MAX_AGE: ms(data.JWT_REFRESH_EXPIRES_IN as StringValue),
+  isDevelopment: data.NODE_ENV === 'development',
+  isProduction: data.NODE_ENV === 'production',
+});

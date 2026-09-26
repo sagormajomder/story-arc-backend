@@ -9,6 +9,8 @@ export const VALIDATIONS = {
   DEFAULT_PROFILE_IMAGE: 'https://i.ibb.co.com/fzYGmQj8/avatar-placeholder.gif',
 };
 
+export const DUMMY_HASH = '$2b$10$abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMN';
+
 export const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
@@ -22,4 +24,9 @@ export const HTTP_STATUS = {
   TOO_MANY_REQUESTS: 429,
   INTERNAL_SERVER_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,
+} as const;
+
+export const COOKIE_CONFIG = {
+  ACCESS_TOKEN_NAME: 'accessToken',
+  REFRESH_TOKEN_NAME: 'refreshToken',
 } as const;
