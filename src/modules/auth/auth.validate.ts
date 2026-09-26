@@ -2,7 +2,7 @@ import { VALIDATIONS } from '@src/shared/utils/constants.js';
 import z from 'zod';
 
 export const registerSchema = z.object({
-  body: z.object({
+  body: z.strictObject({
     fullName: z
       .string({
         error: iss =>
@@ -66,3 +66,35 @@ export const registerSchema = z.object({
 });
 
 export type RegisterDto = z.infer<typeof registerSchema>['body'];
+
+export const loginSchema = z.object({
+  body: z.strictObject({
+    email: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Email is Required'
+            : 'Email must be a string',
+      })
+      .trim()
+      .toLowerCase()
+      .pipe(
+        z.email({
+          pattern: VALIDATIONS.EMAIL_REGEX_PATTERN,
+          error: 'Please provide valid email address',
+        }),
+      ),
+    password: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Password is required'
+            : 'Password must be a string',
+      })
+      .min(VALIDATIONS.PASSWORD_MIN_LENGTH, {
+        error: `Password Must be at least ${VALIDATIONS.PASSWORD_MIN_LENGTH} characters`,
+      }),
+  }),
+});
+
+export type LoginDto = z.infer<typeof loginSchema>['body'];
