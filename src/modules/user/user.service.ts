@@ -8,7 +8,7 @@ import type {
   UserResponseDto,
 } from '@src/modules/user/user.types.js';
 import {
-  bcryptPasswordHasher,
+  argon2PasswordHasher,
   type IPasswordHasher,
 } from '@src/shared/services/hasher.service.js';
 import { excludeFields } from '@src/shared/utils/excludeFields.js';
@@ -21,10 +21,10 @@ export interface IUserService {
   ): Promise<IUserPlainDBResponse | null>;
 }
 
-class UserService implements IUserService {
+export class UserService implements IUserService {
   constructor(
     private readonly repo: IUserRepository = userRepository,
-    private readonly passwordHasher: IPasswordHasher = bcryptPasswordHasher,
+    private readonly passwordHasher: IPasswordHasher = argon2PasswordHasher,
   ) {}
 
   async createUser(userData: IUser): Promise<{ user: UserResponseDto }> {

@@ -24,7 +24,7 @@ export interface ITokenService {
   verifyRefreshToken(token: string, secret?: string): Promise<ITokenPayload>;
 }
 
-class JoseTokenService implements ITokenService {
+export class JoseTokenService implements ITokenService {
   constructor(
     private readonly defaultAccessSecret: string = env.JWT_ACCESS_SECRET,
     private readonly defaultRefreshSecret: string = env.JWT_REFRESH_SECRET,

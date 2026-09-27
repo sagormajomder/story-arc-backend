@@ -12,7 +12,7 @@ export interface IUserRepository {
   ): Promise<IUserPlainDBResponse | null>;
 }
 
-class UserRepository implements IUserRepository {
+export class UserRepository implements IUserRepository {
   constructor(private readonly model = User) {}
 
   async create(userData: IUser): Promise<IUserPlainDBResponse> {

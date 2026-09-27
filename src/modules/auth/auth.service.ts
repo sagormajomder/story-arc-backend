@@ -9,14 +9,14 @@ import {
 } from '@src/modules/user/user.index.js';
 import { AppError } from '@src/shared/errors/appError.js';
 import {
-  bcryptPasswordHasher,
+  argon2PasswordHasher,
   type IPasswordHasher,
 } from '@src/shared/services/hasher.service.js';
 import {
   tokenService,
   type ITokenService,
 } from '@src/shared/services/token.service.js';
-import { DUMMY_HASH, HTTP_STATUS } from '@src/shared/utils/constants.js';
+import { HTTP_STATUS } from '@src/shared/utils/constants.js';
 import { excludeFields } from '@src/shared/utils/excludeFields.js';
 
 export interface IAuthService {
@@ -24,10 +24,10 @@ export interface IAuthService {
   login(loginDto: LoginDto): Promise<LoginResultDto>;
 }
 
-class AuthService implements IAuthService {
+export class AuthService implements IAuthService {
   constructor(
     private readonly userSvc: IUserService = userService,
-    private readonly passwordHasher: IPasswordHasher = bcryptPasswordHasher,
+    private readonly passwordHasher: IPasswordHasher = argon2PasswordHasher,
     private readonly tokenSvc: ITokenService = tokenService,
   ) {}
 
@@ -45,17 +45,13 @@ class AuthService implements IAuthService {
 
   async login(loginDto: LoginDto): Promise<LoginResultDto> {
     const existingUser = await this.userSvc.findByEmail(loginDto.email, true);
-    if (!existingUser) {
-      throw new AppError('Invalid credentials', HTTP_STATUS.UNAUTHORIZED);
-    }
-
-    const passwordToCompareAgainst = existingUser?.password ?? DUMMY_HASH;
 
     const isPasswordMatched = await this.passwordHasher.compare(
       loginDto.password,
-      passwordToCompareAgainst,
+      existingUser?.password,
     );
-    if (!isPasswordMatched) {
+
+    if (!existingUser || !isPasswordMatched) {
       throw new AppError('Invalid credentials', HTTP_STATUS.UNAUTHORIZED);
     }
 
