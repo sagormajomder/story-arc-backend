@@ -64,8 +64,10 @@ class AuthService implements IAuthService {
       email: existingUser.email,
     };
 
-    const accessToken = this.tokenSvc.generateAccessToken(tokenPayload);
-    const refreshToken = this.tokenSvc.generateRefreshToken(tokenPayload);
+    const [accessToken, refreshToken] = await Promise.all([
+      this.tokenSvc.generateAccessToken(tokenPayload),
+      this.tokenSvc.generateRefreshToken(tokenPayload),
+    ]);
 
     const userWithoutPassword = excludeFields(existingUser, ['password']);
 

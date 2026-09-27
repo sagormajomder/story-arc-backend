@@ -1,5 +1,7 @@
 import { env } from '@src/config/env.js';
-import jwt, { type SignOptions } from 'jsonwebtoken';
+import { AppError } from '@src/shared/errors/appError.js';
+import { HTTP_STATUS } from '@src/shared/utils/constants.js';
+import { errors, jwtVerify, SignJWT } from 'jose';
 
 export interface ITokenPayload {
   userId: string;
@@ -11,18 +13,18 @@ export interface ITokenService {
   generateAccessToken(
     payload: ITokenPayload,
     secret?: string,
-    options?: SignOptions,
-  ): string;
+    expiresIn?: string,
+  ): Promise<string>;
   generateRefreshToken(
     payload: ITokenPayload,
     secret?: string,
-    options?: SignOptions,
-  ): string;
-  verifyAccessToken(token: string, secret?: string): ITokenPayload;
-  verifyRefreshToken(token: string, secret?: string): ITokenPayload;
+    expiresIn?: string,
+  ): Promise<string>;
+  verifyAccessToken(token: string, secret?: string): Promise<ITokenPayload>;
+  verifyRefreshToken(token: string, secret?: string): Promise<ITokenPayload>;
 }
 
-export class JwtTokenService implements ITokenService {
+class JoseTokenService implements ITokenService {
   constructor(
     private readonly defaultAccessSecret: string = env.JWT_ACCESS_SECRET,
     private readonly defaultRefreshSecret: string = env.JWT_REFRESH_SECRET,
@@ -30,45 +32,79 @@ export class JwtTokenService implements ITokenService {
     private readonly defaultRefreshExpiresIn: string = env.JWT_REFRESH_EXPIRES_IN,
   ) {}
 
-  generateAccessToken(
+  private getEncodedSecret(secret: string): Uint8Array {
+    return new TextEncoder().encode(secret);
+  }
+
+  private async signToken(
+    payload: ITokenPayload,
+    secret: string,
+    expiresIn: string,
+  ): Promise<string> {
+    return new SignJWT(payload)
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime(expiresIn)
+      .sign(this.getEncodedSecret(secret));
+  }
+
+  private async verifyToken(
+    token: string,
+    secret: string,
+  ): Promise<ITokenPayload> {
+    try {
+      const { payload } = await jwtVerify(
+        token,
+        this.getEncodedSecret(secret),
+        {
+          algorithms: ['HS256'],
+        },
+      );
+      return payload as unknown as ITokenPayload;
+    } catch (error) {
+      if (error instanceof errors.JWTExpired) {
+        throw new AppError('Token has expired', HTTP_STATUS.UNAUTHORIZED);
+      }
+      if (
+        error instanceof errors.JWTInvalid ||
+        error instanceof errors.JWSInvalid ||
+        error instanceof errors.JWTClaimValidationFailed
+      ) {
+        throw new AppError('Invalid token', HTTP_STATUS.UNAUTHORIZED);
+      }
+      throw new AppError('Token verification failed', HTTP_STATUS.UNAUTHORIZED);
+    }
+  }
+
+  async generateAccessToken(
     payload: ITokenPayload,
     secret: string = this.defaultAccessSecret,
-    options?: SignOptions,
-  ): string {
-    const signOptions: SignOptions = {
-      ...(options ?? {}),
-      expiresIn: (options?.expiresIn ??
-        this.defaultAccessExpiresIn) as NonNullable<SignOptions['expiresIn']>,
-    };
-    return jwt.sign(payload, secret, signOptions);
+    expiresIn: string = this.defaultAccessExpiresIn,
+  ): Promise<string> {
+    return this.signToken(payload, secret, expiresIn);
   }
 
-  generateRefreshToken(
+  async generateRefreshToken(
     payload: ITokenPayload,
     secret: string = this.defaultRefreshSecret,
-    options?: SignOptions,
-  ): string {
-    const signOptions: SignOptions = {
-      ...(options ?? {}),
-      expiresIn: (options?.expiresIn ??
-        this.defaultRefreshExpiresIn) as NonNullable<SignOptions['expiresIn']>,
-    };
-    return jwt.sign(payload, secret, signOptions);
+    expiresIn: string = this.defaultRefreshExpiresIn,
+  ): Promise<string> {
+    return this.signToken(payload, secret, expiresIn);
   }
 
-  verifyAccessToken(
+  async verifyAccessToken(
     token: string,
     secret: string = this.defaultAccessSecret,
-  ): ITokenPayload {
-    return jwt.verify(token, secret) as ITokenPayload;
+  ): Promise<ITokenPayload> {
+    return this.verifyToken(token, secret);
   }
 
-  verifyRefreshToken(
+  async verifyRefreshToken(
     token: string,
     secret: string = this.defaultRefreshSecret,
-  ): ITokenPayload {
-    return jwt.verify(token, secret) as ITokenPayload;
+  ): Promise<ITokenPayload> {
+    return this.verifyToken(token, secret);
   }
 }
 
-export const tokenService = new JwtTokenService();
+export const tokenService = new JoseTokenService();
