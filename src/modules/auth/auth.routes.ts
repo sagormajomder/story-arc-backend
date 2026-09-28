@@ -1,5 +1,7 @@
 import {
   loginUserCntlr,
+  logoutUserCntlr,
+  refreshTokenCntlr,
   registerUserCntlr,
 } from '@src/modules/auth/auth.controller.js';
 import {
@@ -12,5 +14,7 @@ const authRoutes = express.Router();
 
 authRoutes.post('/register', validate(registerSchema), registerUserCntlr);
 authRoutes.post('/login', validate(loginSchema), loginUserCntlr);
+authRoutes.post('/refresh', refreshTokenCntlr);
+authRoutes.post('/logout', logoutUserCntlr);
 
 export default authRoutes;

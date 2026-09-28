@@ -1,5 +1,27 @@
 import { type UserResponseDto } from '@src/modules/user/user.index.js';
 
+export interface IDeviceInfo {
+  userAgent?: string;
+  ip?: string;
+}
+
+export interface ICreateRefreshTokenInput {
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  deviceInfo?: IDeviceInfo;
+}
+
+export interface IRefreshTokenPlainResponse {
+  id: string;
+  userId: string;
+  tokenHash: string;
+  expiresAt: Date;
+  deviceInfo?: IDeviceInfo;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export type RegisterResultDto = {
   user: UserResponseDto;
 };
@@ -8,4 +30,13 @@ export type LoginResultDto = {
   user: UserResponseDto;
   accessToken: string;
   refreshToken: string;
+};
+
+export type TokensResultDto = {
+  accessToken: string;
+  refreshToken: string;
+};
+
+export type RefreshResultDto = {
+  accessToken: string;
 };

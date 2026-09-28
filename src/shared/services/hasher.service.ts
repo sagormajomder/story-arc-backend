@@ -1,5 +1,6 @@
 import { ARGON2_CONFIG } from '@src/shared/utils/constants.js';
 import argon2 from 'argon2';
+import { createHash } from 'node:crypto';
 
 export interface IPasswordHasher {
   hash(password: string): Promise<string>;
@@ -30,3 +31,15 @@ export class Argon2PasswordHasher implements IPasswordHasher {
 }
 
 export const argon2PasswordHasher = new Argon2PasswordHasher();
+
+export interface ITokenHasher {
+  hash(token: string): string;
+}
+
+export class SHA256TokenHasher implements ITokenHasher {
+  hash(token: string): string {
+    return createHash('sha256').update(token).digest('hex');
+  }
+}
+
+export const sha256TokenHasher = new SHA256TokenHasher();
