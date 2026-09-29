@@ -14,6 +14,10 @@ const DEFAULT_RATE_LIMIT_MAX = 100;
 const JWT_SECRET_MIN = 32;
 const DEFAULT_JWT_ACCESS_EXPIRES_IN = '15m';
 const DEFAULT_JWT_REFRESH_EXPIRES_IN = '7d';
+const DEFAULT_CLIENT_URLS = [
+  'http://localhost:3000',
+  'http://localhost:5173',
+] as const;
 
 // utility fn
 const emptyStringToUndefined = (val: unknown) => {
@@ -22,6 +26,12 @@ const emptyStringToUndefined = (val: unknown) => {
     return trimmed === '' ? undefined : trimmed;
   }
   return val;
+};
+
+const parseCommaSeparatedUrls = (val: unknown) => {
+  const str = emptyStringToUndefined(val);
+  if (typeof str !== 'string') return str;
+  return str.split(',').map(url => url.trim());
 };
 
 const envSchema = z.object({
@@ -62,6 +72,26 @@ const envSchema = z.object({
           value.startsWith('mongodb://') || value.startsWith('mongodb+srv://'),
         { error: 'MONGODB_URI must start with mongodb:// or mongodb+srv://' },
       ),
+  ),
+  CLIENT_URLS: z.preprocess(
+    parseCommaSeparatedUrls,
+    z
+      .array(
+        z
+          .url({
+            error:
+              'Each origin in CLIENT_URLS must be a valid URL (e.g. http://localhost:3000)',
+          })
+          .transform(url => new URL(url).origin),
+        {
+          error: 'CLIENT_URLS must be a comma-separated list of valid URLs',
+        },
+      )
+      .min(1, {
+        error: 'At least one CORS origin must be provided in CLIENT_URLS',
+      })
+      .transform(urls => [...new Set(urls)])
+      .default([...DEFAULT_CLIENT_URLS]),
   ),
   RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
     emptyStringToUndefined,

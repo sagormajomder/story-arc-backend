@@ -1,3 +1,4 @@
+import { corsOptions } from '@src/config/cors.js';
 import indexRouter from '@src/routes/index.routes.js';
 import { errorHandler } from '@src/shared/middlewares/error.middleware.js';
 import { pinoHttpLogger } from '@src/shared/middlewares/httpLogger.middleware.js';
@@ -31,7 +32,7 @@ app.get('/api/v1/health', (_req: Request, res: Response) => {
 app.set('trust proxy', 1);
 // 2. Base Security & Headers
 app.use(helmet());
-app.use(cors({}));
+app.use(cors(corsOptions));
 // 3. Global Rate Limiter (Placed BEFORE body parser to save CPU/RAM)
 app.use(globalLimiter);
 // 4. Body Parsers & Cookie Parser

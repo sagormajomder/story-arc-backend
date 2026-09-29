@@ -8,18 +8,20 @@ import { COOKIE_CONFIG, HTTP_STATUS } from '@src/shared/utils/constants.js';
 import sendResponse from '@src/shared/utils/sendResponse.js';
 import type { Request, Response } from 'express';
 
-const getCookieOptions = (maxAge: number) => ({
+const getCookieOptions = (maxAge: number, path = '/') => ({
   httpOnly: true,
   secure: env.isProduction,
   sameSite: env.isProduction ? ('none' as const) : ('lax' as const),
   maxAge,
+  path,
 });
 
-const clearCookieOptions = {
+const getClearCookieOptions = (path = '/') => ({
   httpOnly: true,
   secure: env.isProduction,
   sameSite: env.isProduction ? ('none' as const) : ('lax' as const),
-};
+  path,
+});
 
 const extractDeviceInfo = (req: Request): IDeviceInfo => {
   const deviceInfo: IDeviceInfo = {};
@@ -70,7 +72,10 @@ export const loginUserCntlr = asyncCatch(
     res.cookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
       refreshToken,
-      getCookieOptions(env.COOKIE_REFRESH_TOKEN_MAX_AGE),
+      getCookieOptions(
+        env.COOKIE_REFRESH_TOKEN_MAX_AGE,
+        COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+      ),
     );
 
     sendResponse(res, {
@@ -107,7 +112,10 @@ export const refreshTokenCntlr = asyncCatch(
     res.cookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
       refreshToken,
-      getCookieOptions(env.COOKIE_REFRESH_TOKEN_MAX_AGE),
+      getCookieOptions(
+        env.COOKIE_REFRESH_TOKEN_MAX_AGE,
+        COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+      ),
     );
 
     sendResponse(res, {
@@ -128,8 +136,11 @@ export const logoutUserCntlr = asyncCatch(
       await authService.logout(refreshToken);
     }
 
-    res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, clearCookieOptions);
-    res.clearCookie(COOKIE_CONFIG.REFRESH_TOKEN_NAME, clearCookieOptions);
+    res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, getClearCookieOptions());
+    res.clearCookie(
+      COOKIE_CONFIG.REFRESH_TOKEN_NAME,
+      getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH),
+    );
 
     sendResponse(res, {
       statusCode: HTTP_STATUS.OK,
