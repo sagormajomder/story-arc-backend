@@ -2,10 +2,13 @@ import { env } from '@src/config/env.js';
 import { AppError } from '@src/shared/errors/appError.js';
 import { HTTP_STATUS } from '@src/shared/utils/constants.js';
 import { errors, jwtVerify, SignJWT } from 'jose';
+import { randomUUID } from 'node:crypto';
 
 export interface ITokenPayload {
   userId: string;
   email: string;
+  familyId?: string;
+  jti?: string;
   [key: string]: unknown;
 }
 
@@ -43,6 +46,7 @@ export class JoseTokenService implements ITokenService {
   ): Promise<string> {
     return new SignJWT(payload)
       .setProtectedHeader({ alg: 'HS256' })
+      .setJti(randomUUID())
       .setIssuedAt()
       .setExpirationTime(expiresIn)
       .sign(this.getEncodedSecret(secret));

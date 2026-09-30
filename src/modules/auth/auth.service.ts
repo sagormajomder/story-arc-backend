@@ -28,6 +28,8 @@ import {
 } from '@src/shared/services/token.service.js';
 import { HTTP_STATUS } from '@src/shared/utils/constants.js';
 import { excludeFields } from '@src/shared/utils/excludeFields.js';
+import { logger } from '@src/shared/utils/logger.js';
+import { randomUUID } from 'node:crypto';
 
 export interface IAuthService {
   register(registerDto: RegisterDto): Promise<RegisterResultDto>;
@@ -75,6 +77,8 @@ export class AuthService implements IAuthService {
       throw new AppError('Invalid credentials', HTTP_STATUS.UNAUTHORIZED);
     }
 
+    const familyId = randomUUID();
+
     const tokenPayload = {
       userId: existingUser.id,
       email: existingUser.email,
@@ -82,7 +86,10 @@ export class AuthService implements IAuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.tokenSvc.generateAccessToken(tokenPayload),
-      this.tokenSvc.generateRefreshToken(tokenPayload),
+      this.tokenSvc.generateRefreshToken({
+        ...tokenPayload,
+        familyId,
+      }),
     ]);
 
     const tokenHash = this.tokenHasher.hash(refreshToken);
@@ -90,8 +97,10 @@ export class AuthService implements IAuthService {
 
     const tokenInput: ICreateRefreshTokenInput = {
       userId: existingUser.id,
+      familyId,
       tokenHash,
       expiresAt,
+      isRevoked: false,
     };
     if (deviceInfo) {
       tokenInput.deviceInfo = {
@@ -119,15 +128,30 @@ export class AuthService implements IAuthService {
     const tokenHash = this.tokenHasher.hash(oldRefreshToken);
     const storedToken = await this.refreshTokenRepo.findByTokenHash(tokenHash);
 
-    if (!storedToken) {
+    // Reuse detection:
+    // If the token is not found in DB OR was already marked as revoked/used:
+    if (!storedToken || storedToken.isRevoked) {
+      const familyId =
+        storedToken?.familyId ?? (payload.familyId as string | undefined);
+
+      if (familyId) {
+        logger.warn(
+          { userId: payload.userId, familyId },
+          'Refresh token reuse detected! Revoking all tokens in session family.',
+        );
+        await this.refreshTokenRepo.deleteAllByFamilyId(familyId);
+      }
+
       throw new AppError(
         'Invalid or revoked refresh token',
         HTTP_STATUS.UNAUTHORIZED,
       );
     }
 
-    // Token Rotation: revoke previous refresh token immediately
-    await this.refreshTokenRepo.deleteByTokenHash(tokenHash);
+    // Token Rotation: mark the previous refresh token as revoked immediately
+    await this.refreshTokenRepo.markAsRevoked(tokenHash);
+
+    const familyId = storedToken.familyId;
 
     const tokenPayload = {
       userId: payload.userId,
@@ -136,7 +160,10 @@ export class AuthService implements IAuthService {
 
     const [newAccessToken, newRefreshToken] = await Promise.all([
       this.tokenSvc.generateAccessToken(tokenPayload),
-      this.tokenSvc.generateRefreshToken(tokenPayload),
+      this.tokenSvc.generateRefreshToken({
+        ...tokenPayload,
+        familyId,
+      }),
     ]);
 
     const newTokenHash = this.tokenHasher.hash(newRefreshToken);
@@ -153,8 +180,10 @@ export class AuthService implements IAuthService {
 
     const tokenInput: ICreateRefreshTokenInput = {
       userId: payload.userId,
+      familyId,
       tokenHash: newTokenHash,
       expiresAt,
+      isRevoked: false,
       deviceInfo: effectiveDeviceInfo,
     };
     await this.refreshTokenRepo.create(tokenInput);
@@ -168,6 +197,26 @@ export class AuthService implements IAuthService {
   async logout(refreshToken: string): Promise<void> {
     try {
       const tokenHash = this.tokenHasher.hash(refreshToken);
+      const storedToken =
+        await this.refreshTokenRepo.findByTokenHash(tokenHash);
+
+      if (storedToken?.familyId) {
+        await this.refreshTokenRepo.deleteAllByFamilyId(storedToken.familyId);
+        return;
+      }
+
+      try {
+        const payload = await this.tokenSvc.verifyRefreshToken(refreshToken);
+        if (payload.familyId) {
+          await this.refreshTokenRepo.deleteAllByFamilyId(
+            payload.familyId as string,
+          );
+          return;
+        }
+      } catch {
+        // Silently ignore if token verification fails
+      }
+
       await this.refreshTokenRepo.deleteByTokenHash(tokenHash);
     } catch {
       // Silently ignore to ensure logout always succeeds

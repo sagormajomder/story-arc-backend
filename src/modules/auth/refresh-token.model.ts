@@ -3,13 +3,17 @@ import mongoose, { type Document, type Model, type Types } from 'mongoose';
 
 export interface IRefreshTokenCreateDoc {
   userId: Types.ObjectId | string;
+  familyId: string;
   tokenHash: string;
   expiresAt: Date;
   deviceInfo?: IDeviceInfo;
+  isRevoked?: boolean;
 }
 
 export interface IRefreshTokenDocument
-  extends IRefreshTokenCreateDoc, Document {}
+  extends IRefreshTokenCreateDoc, Document {
+  isRevoked: boolean;
+}
 
 const deviceInfoSchema = new mongoose.Schema<IDeviceInfo>(
   {
@@ -27,10 +31,20 @@ const refreshTokenSchema = new mongoose.Schema<IRefreshTokenDocument>(
       required: true,
       index: true,
     },
+    familyId: {
+      type: String,
+      required: true,
+      index: true,
+    },
     tokenHash: {
       type: String,
       required: true,
       unique: true,
+    },
+    isRevoked: {
+      type: Boolean,
+      default: false,
+      index: true,
     },
     expiresAt: {
       type: Date,

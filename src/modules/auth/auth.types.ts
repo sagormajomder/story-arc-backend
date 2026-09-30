@@ -7,15 +7,19 @@ export interface IDeviceInfo {
 
 export interface ICreateRefreshTokenInput {
   userId: string;
+  familyId: string;
   tokenHash: string;
   expiresAt: Date;
   deviceInfo?: IDeviceInfo;
+  isRevoked?: boolean;
 }
 
 export interface IRefreshTokenPlainResponse {
   id: string;
   userId: string;
+  familyId: string;
   tokenHash: string;
+  isRevoked: boolean;
   expiresAt: Date;
   deviceInfo?: IDeviceInfo;
   createdAt: Date;

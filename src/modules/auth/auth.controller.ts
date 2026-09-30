@@ -98,34 +98,43 @@ export const refreshTokenCntlr = asyncCatch(
     }
 
     const deviceInfo = extractDeviceInfo(req);
-    const { accessToken, refreshToken } = await authService.refreshTokens(
-      oldRefreshToken,
-      deviceInfo,
-    );
+    try {
+      const { accessToken, refreshToken } = await authService.refreshTokens(
+        oldRefreshToken,
+        deviceInfo,
+      );
 
-    res.cookie(
-      COOKIE_CONFIG.ACCESS_TOKEN_NAME,
-      accessToken,
-      getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
-    );
-
-    res.cookie(
-      COOKIE_CONFIG.REFRESH_TOKEN_NAME,
-      refreshToken,
-      getCookieOptions(
-        env.COOKIE_REFRESH_TOKEN_MAX_AGE,
-        COOKIE_CONFIG.REFRESH_COOKIE_PATH,
-      ),
-    );
-
-    sendResponse(res, {
-      statusCode: HTTP_STATUS.OK,
-      success: true,
-      message: 'Tokens refreshed successfully',
-      data: {
+      res.cookie(
+        COOKIE_CONFIG.ACCESS_TOKEN_NAME,
         accessToken,
-      },
-    });
+        getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
+      );
+
+      res.cookie(
+        COOKIE_CONFIG.REFRESH_TOKEN_NAME,
+        refreshToken,
+        getCookieOptions(
+          env.COOKIE_REFRESH_TOKEN_MAX_AGE,
+          COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+        ),
+      );
+
+      sendResponse(res, {
+        statusCode: HTTP_STATUS.OK,
+        success: true,
+        message: 'Tokens refreshed successfully',
+        data: {
+          accessToken,
+        },
+      });
+    } catch (error) {
+      res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, getClearCookieOptions());
+      res.clearCookie(
+        COOKIE_CONFIG.REFRESH_TOKEN_NAME,
+        getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH),
+      );
+      throw error;
+    }
   },
 );
 

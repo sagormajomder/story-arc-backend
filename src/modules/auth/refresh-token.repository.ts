@@ -13,6 +13,9 @@ export interface IRefreshTokenRepository {
     tokenHash: string,
   ): Promise<IRefreshTokenPlainResponse | null>;
   deleteByTokenHash(tokenHash: string): Promise<void>;
+  markAsRevoked(tokenHash: string): Promise<void>;
+  deleteAllByFamilyId(familyId: string): Promise<void>;
+  findAllByFamilyId(familyId: string): Promise<IRefreshTokenPlainResponse[]>;
   findAllByUserId(userId: string): Promise<IRefreshTokenPlainResponse[]>;
   deleteAllByUserId(userId: string): Promise<void>;
   countByUserId(userId: string): Promise<number>;
@@ -24,8 +27,10 @@ export class MongooseRefreshTokenRepository implements IRefreshTokenRepository {
   async create(data: ICreateRefreshTokenInput): Promise<void> {
     const doc: IRefreshTokenCreateDoc = {
       userId: data.userId,
+      familyId: data.familyId,
       tokenHash: data.tokenHash,
       expiresAt: data.expiresAt,
+      isRevoked: data.isRevoked ?? false,
     };
     if (data.deviceInfo) {
       doc.deviceInfo = data.deviceInfo;
@@ -45,6 +50,23 @@ export class MongooseRefreshTokenRepository implements IRefreshTokenRepository {
 
   async deleteByTokenHash(tokenHash: string): Promise<void> {
     await this.model.deleteOne({ tokenHash });
+  }
+
+  async markAsRevoked(tokenHash: string): Promise<void> {
+    await this.model.updateOne({ tokenHash }, { $set: { isRevoked: true } });
+  }
+
+  async deleteAllByFamilyId(familyId: string): Promise<void> {
+    await this.model.deleteMany({ familyId });
+  }
+
+  async findAllByFamilyId(
+    familyId: string,
+  ): Promise<IRefreshTokenPlainResponse[]> {
+    const docs = await this.model.find({ familyId });
+    return docs.map(
+      doc => doc.toObject() as unknown as IRefreshTokenPlainResponse,
+    );
   }
 
   async findAllByUserId(userId: string): Promise<IRefreshTokenPlainResponse[]> {
