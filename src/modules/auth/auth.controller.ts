@@ -63,11 +63,11 @@ export const loginUserCntlr = asyncCatch(
       deviceInfo,
     );
 
-    res.cookie(
-      COOKIE_CONFIG.ACCESS_TOKEN_NAME,
-      accessToken,
-      getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
-    );
+    // res.cookie(
+    //   COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+    //   accessToken,
+    //   getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
+    // );
 
     res.cookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
@@ -104,11 +104,11 @@ export const refreshTokenCntlr = asyncCatch(
         deviceInfo,
       );
 
-      res.cookie(
-        COOKIE_CONFIG.ACCESS_TOKEN_NAME,
-        accessToken,
-        getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
-      );
+      // res.cookie(
+      //   COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+      //   accessToken,
+      //   getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
+      // );
 
       res.cookie(
         COOKIE_CONFIG.REFRESH_TOKEN_NAME,
@@ -145,7 +145,7 @@ export const logoutUserCntlr = asyncCatch(
       await authService.logout(refreshToken);
     }
 
-    res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, getClearCookieOptions());
+    // res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, getClearCookieOptions());
     res.clearCookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
       getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH),

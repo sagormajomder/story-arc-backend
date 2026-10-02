@@ -79,6 +79,18 @@ export function errorHandler(
         message: `${field} already exists`,
       },
     ];
+  } else if (
+    err instanceof Error &&
+    err.message.startsWith('CORS not allowed')
+  ) {
+    statusCode = HTTP_STATUS.FORBIDDEN;
+    message = err.message;
+    errorSources = [
+      {
+        path: '',
+        message: err.message,
+      },
+    ];
   } else if (err instanceof Error) {
     message =
       process.env.NODE_ENV === 'production'
