@@ -11,6 +11,8 @@ const PORT_RANGE = {
 const DEFAULT_PORT = 5000;
 const DEFAULT_RATE_LIMIT_WINDOW_MINUTES = 15;
 const DEFAULT_RATE_LIMIT_MAX = 100;
+const DEFAULT_AUTH_RATE_LIMIT_WINDOW_MINUTES = 15;
+const DEFAULT_AUTH_RATE_LIMIT_MAX = 10;
 const DEFAULT_REFRESH_RATE_LIMIT_WINDOW_MINUTES = 15;
 const DEFAULT_REFRESH_RATE_LIMIT_MAX = 20;
 const JWT_SECRET_MIN = 32;
@@ -110,6 +112,24 @@ const envSchema = z.object({
       .int({ error: 'RATE_LIMIT_MAX must be an integer' })
       .positive({ error: 'RATE_LIMIT_MAX must be greater than 0' })
       .default(DEFAULT_RATE_LIMIT_MAX),
+  ),
+  AUTH_RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({ error: 'AUTH_RATE_LIMIT_WINDOW_MINUTES must be a number' })
+      .int({ error: 'AUTH_RATE_LIMIT_WINDOW_MINUTES must be an integer' })
+      .positive({
+        error: 'AUTH_RATE_LIMIT_WINDOW_MINUTES must be greater than 0',
+      })
+      .default(DEFAULT_AUTH_RATE_LIMIT_WINDOW_MINUTES),
+  ),
+  AUTH_RATE_LIMIT_MAX: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({ error: 'AUTH_RATE_LIMIT_MAX must be a number' })
+      .int({ error: 'AUTH_RATE_LIMIT_MAX must be an integer' })
+      .positive({ error: 'AUTH_RATE_LIMIT_MAX must be greater than 0' })
+      .default(DEFAULT_AUTH_RATE_LIMIT_MAX),
   ),
   REFRESH_RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
     emptyStringToUndefined,

@@ -14,6 +14,18 @@ export const globalLimiter = rateLimit({
   },
 });
 
+export const authLimiter = rateLimit({
+  windowMs: env.AUTH_RATE_LIMIT_WINDOW_MINUTES * MINUTE,
+  limit: env.AUTH_RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+  message: {
+    success: false,
+    message: `Too many auth requests from this IP, please try again after ${env.AUTH_RATE_LIMIT_WINDOW_MINUTES} minutes.`,
+  },
+});
+
 export const refreshLimiter = rateLimit({
   windowMs: env.REFRESH_RATE_LIMIT_WINDOW_MINUTES * MINUTE,
   limit: env.REFRESH_RATE_LIMIT_MAX,
