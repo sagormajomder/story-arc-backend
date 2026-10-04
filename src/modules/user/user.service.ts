@@ -19,6 +19,8 @@ export interface IUserService {
     email: string,
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
+  findById(userId: string): Promise<IUserPlainDBResponse | null>;
+  updatePassword(userId: string, newPassword: string): Promise<void>;
 }
 
 export class UserService implements IUserService {
@@ -44,6 +46,15 @@ export class UserService implements IUserService {
     includePassword = false,
   ): Promise<IUserPlainDBResponse | null> {
     return this.repo.findByEmail(email, includePassword);
+  }
+
+  async findById(userId: string): Promise<IUserPlainDBResponse | null> {
+    return this.repo.findById(userId);
+  }
+
+  async updatePassword(userId: string, newPassword: string): Promise<void> {
+    const hashedPassword = await this.passwordHasher.hash(newPassword);
+    await this.repo.updatePassword(userId, hashedPassword);
   }
 }
 

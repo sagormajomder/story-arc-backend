@@ -98,3 +98,67 @@ export const loginSchema = z.object({
 });
 
 export type LoginDto = z.infer<typeof loginSchema>['body'];
+
+export const forgotPasswordSchema = z.object({
+  body: z.strictObject({
+    email: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Email is Required'
+            : 'Email must be a string',
+      })
+      .trim()
+      .toLowerCase()
+      .pipe(
+        z.email({
+          pattern: VALIDATIONS.EMAIL_REGEX_PATTERN,
+          error: 'Please provide valid email address',
+        }),
+      ),
+  }),
+});
+
+export type ForgotPasswordDto = z.infer<typeof forgotPasswordSchema>['body'];
+
+export const resetPasswordSchema = z.object({
+  body: z.strictObject({
+    token: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Reset token is required'
+            : 'Reset token must be a string',
+      })
+      .trim()
+      .min(1, { error: 'Reset token cannot be empty' }),
+    newPassword: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'New password is required'
+            : 'New password must be a string',
+      })
+      .min(VALIDATIONS.PASSWORD_MIN_LENGTH, {
+        error: `Password Must be at least ${VALIDATIONS.PASSWORD_MIN_LENGTH} characters`,
+      })
+      .max(VALIDATIONS.PASSWORD_MAX_LENGTH, {
+        error: `Password can't exceed ${VALIDATIONS.PASSWORD_MAX_LENGTH} characters`,
+      })
+      .regex(/[a-z]/, {
+        error: 'Password should have at least one lowercase letter',
+      })
+      .regex(/[A-Z]/, {
+        error: 'Password should have at least one uppercase letter',
+      })
+      .regex(/\d/, {
+        error: 'Password should have at least one digit',
+      })
+      .regex(/[^a-zA-Z0-9]/, {
+        error: 'Password should have at least one special characters',
+      }),
+  }),
+});
+
+export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>['body'];
+

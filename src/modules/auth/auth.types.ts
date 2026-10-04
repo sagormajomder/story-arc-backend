@@ -44,3 +44,11 @@ export type TokensResultDto = {
 export type RefreshResultDto = {
   accessToken: string;
 };
+
+export type ForgotPasswordResultDto = {
+  message: string;
+};
+
+export type ResetPasswordResultDto = {
+  message: string;
+};

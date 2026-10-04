@@ -39,3 +39,24 @@ export const refreshLimiter = rateLimit({
     message: `Too many refresh requests from this IP, please try again after ${env.REFRESH_RATE_LIMIT_WINDOW_MINUTES} minutes.`,
   },
 });
+
+export const forgotPasswordEmailLimiter = rateLimit({
+  windowMs:
+    env.PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES * MINUTE_IN_MS,
+  limit: env.PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX,
+  standardHeaders: 'draft-8',
+  legacyHeaders: false,
+  validate: { keyGeneratorIpFallback: false },
+  keyGenerator: req => {
+    const email = req.body?.email;
+    return typeof email === 'string' && email.trim()
+      ? `reset-email:${email.trim().toLowerCase()}`
+      : 'anonymous';
+  },
+  statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
+  message: {
+    success: false,
+    message: `Too many password reset requests for this email. Please try again after ${env.PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES} minutes.`,
+  },
+});
+

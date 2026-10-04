@@ -22,6 +22,11 @@ const DEFAULT_CLIENT_URLS = [
   'http://localhost:3000',
   'http://localhost:5173',
 ] as const;
+const DEFAULT_PASSWORD_RESET_EXPIRES_MINUTES = 15;
+const DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES = 60;
+const DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX = 3;
+const DEFAULT_EMAIL_FROM_NAME = 'Story Arc';
+const DEFAULT_EMAIL_FROM_ADDRESS = 'noreply@storyarc.com';
 
 // utility fn
 const emptyStringToUndefined = (val: unknown) => {
@@ -196,6 +201,55 @@ const envSchema = z.object({
           'JWT_REFRESH_EXPIRES_IN must be a valid duration string like "15m" or "7d"',
       })
       .default(DEFAULT_JWT_REFRESH_EXPIRES_IN),
+  ),
+  BREVO_API_KEY: z.preprocess(
+    emptyStringToUndefined,
+    z.string().optional(),
+  ),
+  EMAIL_FROM_NAME: z.preprocess(
+    emptyStringToUndefined,
+    z.string().default(DEFAULT_EMAIL_FROM_NAME),
+  ),
+  EMAIL_FROM_ADDRESS: z.preprocess(
+    emptyStringToUndefined,
+    z.string().default(DEFAULT_EMAIL_FROM_ADDRESS),
+  ),
+  PASSWORD_RESET_EXPIRES_MINUTES: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({ error: 'PASSWORD_RESET_EXPIRES_MINUTES must be a number' })
+      .int({ error: 'PASSWORD_RESET_EXPIRES_MINUTES must be an integer' })
+      .positive({
+        error: 'PASSWORD_RESET_EXPIRES_MINUTES must be greater than 0',
+      })
+      .default(DEFAULT_PASSWORD_RESET_EXPIRES_MINUTES),
+  ),
+  PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({
+        error:
+          'PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES must be a number',
+      })
+      .int({
+        error:
+          'PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES must be an integer',
+      })
+      .positive({
+        error:
+          'PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES must be greater than 0',
+      })
+      .default(DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES),
+  ),
+  PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({ error: 'PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX must be a number' })
+      .int({ error: 'PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX must be an integer' })
+      .positive({
+        error: 'PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX must be greater than 0',
+      })
+      .default(DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX),
   ),
 });
 

@@ -10,6 +10,8 @@ export interface IUserRepository {
     email: string,
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
+  findById(userId: string): Promise<IUserPlainDBResponse | null>;
+  updatePassword(userId: string, hashedPassword: string): Promise<void>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -33,6 +35,24 @@ export class UserRepository implements IUserRepository {
       return null;
     }
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
+  }
+
+  async findById(userId: string): Promise<IUserPlainDBResponse | null> {
+    const userDoc = await this.model.findById(userId);
+    if (!userDoc) {
+      return null;
+    }
+    return userDoc.toObject() as unknown as IUserPlainDBResponse;
+  }
+
+  async updatePassword(
+    userId: string,
+    hashedPassword: string,
+  ): Promise<void> {
+    await this.model.updateOne(
+      { _id: userId },
+      { $set: { password: hashedPassword } },
+    );
   }
 }
 

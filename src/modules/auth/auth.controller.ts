@@ -1,7 +1,12 @@
 import { env } from '@src/config/env.js';
 import { authService } from '@src/modules/auth/auth.service.js';
 import type { IDeviceInfo } from '@src/modules/auth/auth.types.js';
-import type { LoginDto, RegisterDto } from '@src/modules/auth/auth.validate.js';
+import type {
+  ForgotPasswordDto,
+  LoginDto,
+  RegisterDto,
+  ResetPasswordDto,
+} from '@src/modules/auth/auth.validate.js';
 import { AppError } from '@src/shared/errors/appError.js';
 import asyncCatch from '@src/shared/utils/asyncCatch.js';
 import { COOKIE_CONFIG, HTTP_STATUS } from '@src/shared/utils/constants.js';
@@ -159,3 +164,36 @@ export const logoutUserCntlr = asyncCatch(
     });
   },
 );
+
+export const forgotPasswordCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const forgotPasswordDto: ForgotPasswordDto = req.body;
+
+    await authService.forgotPassword(forgotPasswordDto);
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message:
+        'If an account with that email exists, a password reset link has been sent.',
+      data: null,
+    });
+  },
+);
+
+export const resetPasswordCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const resetPasswordDto: ResetPasswordDto = req.body;
+
+    await authService.resetPassword(resetPasswordDto);
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message:
+        'Password has been reset successfully. Please log in with your new password.',
+      data: null,
+    });
+  },
+);
+
