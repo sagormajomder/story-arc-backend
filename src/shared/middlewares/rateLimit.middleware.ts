@@ -1,9 +1,11 @@
 import { env } from '@src/config/env.js';
 import { HTTP_STATUS } from '@src/shared/utils/constants.js';
-import rateLimit, { MINUTE } from 'express-rate-limit';
+import { default as rateLimit } from 'express-rate-limit';
+
+const MINUTE_IN_MS = 60 * 1000;
 
 export const globalLimiter = rateLimit({
-  windowMs: env.RATE_LIMIT_WINDOW_MINUTES * MINUTE,
+  windowMs: env.RATE_LIMIT_WINDOW_MINUTES * MINUTE_IN_MS,
   limit: env.RATE_LIMIT_MAX,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
@@ -15,7 +17,7 @@ export const globalLimiter = rateLimit({
 });
 
 export const authLimiter = rateLimit({
-  windowMs: env.AUTH_RATE_LIMIT_WINDOW_MINUTES * MINUTE,
+  windowMs: env.AUTH_RATE_LIMIT_WINDOW_MINUTES * MINUTE_IN_MS,
   limit: env.AUTH_RATE_LIMIT_MAX,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
@@ -27,7 +29,7 @@ export const authLimiter = rateLimit({
 });
 
 export const refreshLimiter = rateLimit({
-  windowMs: env.REFRESH_RATE_LIMIT_WINDOW_MINUTES * MINUTE,
+  windowMs: env.REFRESH_RATE_LIMIT_WINDOW_MINUTES * MINUTE_IN_MS,
   limit: env.REFRESH_RATE_LIMIT_MAX,
   standardHeaders: 'draft-8',
   legacyHeaders: false,
@@ -37,4 +39,3 @@ export const refreshLimiter = rateLimit({
     message: `Too many refresh requests from this IP, please try again after ${env.REFRESH_RATE_LIMIT_WINDOW_MINUTES} minutes.`,
   },
 });
-
