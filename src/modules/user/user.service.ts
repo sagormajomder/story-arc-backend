@@ -19,7 +19,10 @@ export interface IUserService {
     email: string,
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
-  findById(userId: string): Promise<IUserPlainDBResponse | null>;
+  findById(
+    userId: string,
+    includePassword?: boolean,
+  ): Promise<IUserPlainDBResponse | null>;
   updatePassword(userId: string, newPassword: string): Promise<void>;
 }
 
@@ -48,8 +51,11 @@ export class UserService implements IUserService {
     return this.repo.findByEmail(email, includePassword);
   }
 
-  async findById(userId: string): Promise<IUserPlainDBResponse | null> {
-    return this.repo.findById(userId);
+  async findById(
+    userId: string,
+    includePassword = false,
+  ): Promise<IUserPlainDBResponse | null> {
+    return this.repo.findById(userId, includePassword);
   }
 
   async updatePassword(userId: string, newPassword: string): Promise<void> {

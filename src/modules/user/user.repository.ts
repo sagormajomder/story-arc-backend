@@ -10,7 +10,10 @@ export interface IUserRepository {
     email: string,
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
-  findById(userId: string): Promise<IUserPlainDBResponse | null>;
+  findById(
+    userId: string,
+    includePassword?: boolean,
+  ): Promise<IUserPlainDBResponse | null>;
   updatePassword(userId: string, hashedPassword: string): Promise<void>;
 }
 
@@ -37,8 +40,15 @@ export class UserRepository implements IUserRepository {
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 
-  async findById(userId: string): Promise<IUserPlainDBResponse | null> {
-    const userDoc = await this.model.findById(userId);
+  async findById(
+    userId: string,
+    includePassword = false,
+  ): Promise<IUserPlainDBResponse | null> {
+    const query = this.model.findById(userId);
+    if (includePassword) {
+      query.select('+password');
+    }
+    const userDoc = await query.exec();
     if (!userDoc) {
       return null;
     }

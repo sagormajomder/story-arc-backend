@@ -311,12 +311,25 @@ export class AuthService implements IAuthService {
     }
 
     // Verify user still exists
-    const user = await this.userSvc.findById(storedToken.userId);
+    const user = await this.userSvc.findById(storedToken.userId, true);
     if (!user) {
       throw new AppError(
         'Invalid or expired password reset token',
         HTTP_STATUS.BAD_REQUEST,
       );
+    }
+
+    if (user.password) {
+      const isSamePassword = await this.passwordHasher.compare(
+        resetPasswordDto.newPassword,
+        user.password,
+      );
+      if (isSamePassword) {
+        throw new AppError(
+          'New password cannot be the same as the previous password',
+          HTTP_STATUS.BAD_REQUEST,
+        );
+      }
     }
 
     // Update password
