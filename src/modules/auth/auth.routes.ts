@@ -4,18 +4,23 @@ import {
   logoutUserCntlr,
   refreshTokenCntlr,
   registerUserCntlr,
+  resendVerificationCntlr,
   resetPasswordCntlr,
+  verifyEmailCntlr,
 } from '@src/modules/auth/auth.controller.js';
 import {
   forgotPasswordSchema,
   loginSchema,
   registerSchema,
+  resendVerificationSchema,
   resetPasswordSchema,
+  verifyEmailSchema,
 } from '@src/modules/auth/auth.validate.js';
 import {
   authLimiter,
   forgotPasswordEmailLimiter,
   refreshLimiter,
+  resendVerificationEmailLimiter,
 } from '@src/shared/middlewares/rateLimit.middleware.js';
 import { csrfGuard } from '@src/shared/middlewares/security.middleware.js';
 import { validate } from '@src/shared/middlewares/validate.middleware.js';
@@ -27,6 +32,19 @@ authRoutes.post(
   authLimiter,
   validate(registerSchema),
   registerUserCntlr,
+);
+authRoutes.post(
+  '/verify-email',
+  authLimiter,
+  validate(verifyEmailSchema),
+  verifyEmailCntlr,
+);
+authRoutes.post(
+  '/resend-verification',
+  authLimiter,
+  validate(resendVerificationSchema),
+  resendVerificationEmailLimiter,
+  resendVerificationCntlr,
 );
 authRoutes.post('/login', authLimiter, validate(loginSchema), loginUserCntlr);
 authRoutes.post(

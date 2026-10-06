@@ -162,3 +162,43 @@ export const resetPasswordSchema = z.object({
 
 export type ResetPasswordDto = z.infer<typeof resetPasswordSchema>['body'];
 
+export const verifyEmailSchema = z.object({
+  body: z.strictObject({
+    token: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Verification token is required'
+            : 'Verification token must be a string',
+      })
+      .trim()
+      .min(1, { error: 'Verification token cannot be empty' }),
+  }),
+});
+
+export type VerifyEmailDto = z.infer<typeof verifyEmailSchema>['body'];
+
+export const resendVerificationSchema = z.object({
+  body: z.strictObject({
+    email: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Email is Required'
+            : 'Email must be a string',
+      })
+      .trim()
+      .toLowerCase()
+      .pipe(
+        z.email({
+          pattern: VALIDATIONS.EMAIL_REGEX_PATTERN,
+          error: 'Please provide valid email address',
+        }),
+      ),
+  }),
+});
+
+export type ResendVerificationDto =
+  z.infer<typeof resendVerificationSchema>['body'];
+
+

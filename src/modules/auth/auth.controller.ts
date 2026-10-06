@@ -5,7 +5,9 @@ import type {
   ForgotPasswordDto,
   LoginDto,
   RegisterDto,
+  ResendVerificationDto,
   ResetPasswordDto,
+  VerifyEmailDto,
 } from '@src/modules/auth/auth.validate.js';
 import { AppError } from '@src/shared/errors/appError.js';
 import asyncCatch from '@src/shared/utils/asyncCatch.js';
@@ -47,13 +49,45 @@ export const registerUserCntlr = asyncCatch(
   async (req: Request, res: Response) => {
     const registerDto: RegisterDto = req.body;
 
-    const result = await authService.register(registerDto);
+    await authService.register(registerDto);
 
     sendResponse(res, {
-      statusCode: HTTP_STATUS.CREATED,
+      statusCode: HTTP_STATUS.ACCEPTED,
       success: true,
-      message: 'User registered successfully',
-      data: result,
+      message:
+        'We have sent a verification link to your email address. Please check your inbox.',
+      data: null,
+    });
+  },
+);
+
+export const verifyEmailCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const verifyEmailDto: VerifyEmailDto = req.body;
+
+    await authService.verifyEmail(verifyEmailDto);
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message: 'Email verified successfully. Please log in.',
+      data: null,
+    });
+  },
+);
+
+export const resendVerificationCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const resendVerificationDto: ResendVerificationDto = req.body;
+
+    await authService.resendVerification(resendVerificationDto);
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message:
+        'If an unverified account exists with that email, a verification link has been sent.',
+      data: null,
     });
   },
 );

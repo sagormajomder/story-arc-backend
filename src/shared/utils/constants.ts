@@ -17,6 +17,7 @@ export const ARGON2_CONFIG = {
 export const HTTP_STATUS = {
   OK: 200,
   CREATED: 201,
+  ACCEPTED: 202,
   NO_CONTENT: 204,
   BAD_REQUEST: 400,
   UNAUTHORIZED: 401,
@@ -34,3 +35,11 @@ export const COOKIE_CONFIG = {
   REFRESH_TOKEN_NAME: 'refreshToken',
   REFRESH_COOKIE_PATH: '/api/v1/auth',
 } as const;
+
+export const TIME_MS = {
+  SECOND: 1000,
+  MINUTE: 60 * 1000,
+  HOUR: 60 * 60 * 1000,
+  DAY: 24 * 60 * 60 * 1000,
+} as const;
+

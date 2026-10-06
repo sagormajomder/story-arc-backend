@@ -24,6 +24,7 @@ export interface IUserService {
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
   updatePassword(userId: string, newPassword: string): Promise<void>;
+  markEmailAsVerified(userId: string): Promise<void>;
 }
 
 export class UserService implements IUserService {
@@ -61,6 +62,10 @@ export class UserService implements IUserService {
   async updatePassword(userId: string, newPassword: string): Promise<void> {
     const hashedPassword = await this.passwordHasher.hash(newPassword);
     await this.repo.updatePassword(userId, hashedPassword);
+  }
+
+  async markEmailAsVerified(userId: string): Promise<void> {
+    await this.repo.markEmailAsVerified(userId);
   }
 }
 

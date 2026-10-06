@@ -27,6 +27,9 @@ const DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_WINDOW_MINUTES = 60;
 const DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX = 3;
 const DEFAULT_EMAIL_FROM_NAME = 'Story Arc';
 const DEFAULT_EMAIL_FROM_ADDRESS = 'noreply@storyarc.com';
+const DEFAULT_EMAIL_VERIFICATION_EXPIRES_HOURS = 24;
+const DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES = 60;
+const DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX = 3;
 
 // utility fn
 const emptyStringToUndefined = (val: unknown) => {
@@ -250,6 +253,48 @@ const envSchema = z.object({
         error: 'PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX must be greater than 0',
       })
       .default(DEFAULT_PASSWORD_RESET_EMAIL_RATE_LIMIT_MAX),
+  ),
+  EMAIL_VERIFICATION_EXPIRES_HOURS: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({ error: 'EMAIL_VERIFICATION_EXPIRES_HOURS must be a number' })
+      .int({ error: 'EMAIL_VERIFICATION_EXPIRES_HOURS must be an integer' })
+      .positive({
+        error: 'EMAIL_VERIFICATION_EXPIRES_HOURS must be greater than 0',
+      })
+      .default(DEFAULT_EMAIL_VERIFICATION_EXPIRES_HOURS),
+  ),
+  RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({
+        error:
+          'RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES must be a number',
+      })
+      .int({
+        error:
+          'RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES must be an integer',
+      })
+      .positive({
+        error:
+          'RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES must be greater than 0',
+      })
+      .default(DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES),
+  ),
+  RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX: z.preprocess(
+    emptyStringToUndefined,
+    z.coerce
+      .number({
+        error: 'RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX must be a number',
+      })
+      .int({
+        error: 'RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX must be an integer',
+      })
+      .positive({
+        error:
+          'RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX must be greater than 0',
+      })
+      .default(DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX),
   ),
 });
 

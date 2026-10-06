@@ -1,14 +1,14 @@
 import app from '@src/app.js';
 import { env } from '@src/config/env.js';
 import { connectDB } from '@src/shared/database/db.js';
-
+import { TIME_MS } from '@src/shared/utils/constants.js';
 import { logger } from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';
 import type { Server } from 'node:http';
 
-const SERVER_SHUTDOWN_TIMEOUT_MS = 5000;
-const KEEP_ALIVE_TIMEOUT_MS = 65_000;
-const HEADERS_TIMEOUT_MS = KEEP_ALIVE_TIMEOUT_MS + 1_000;
+const SERVER_SHUTDOWN_TIMEOUT_MS = 5 * TIME_MS.SECOND;
+const KEEP_ALIVE_TIMEOUT_MS = 65 * TIME_MS.SECOND;
+const HEADERS_TIMEOUT_MS = KEEP_ALIVE_TIMEOUT_MS + TIME_MS.SECOND;
 
 const port: number = env.PORT;
 let server: Server;

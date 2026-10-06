@@ -15,6 +15,7 @@ export interface IUserRepository {
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
   updatePassword(userId: string, hashedPassword: string): Promise<void>;
+  markEmailAsVerified(userId: string): Promise<void>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -62,6 +63,13 @@ export class UserRepository implements IUserRepository {
     await this.model.updateOne(
       { _id: userId },
       { $set: { password: hashedPassword } },
+    );
+  }
+
+  async markEmailAsVerified(userId: string): Promise<void> {
+    await this.model.updateOne(
+      { _id: userId },
+      { $set: { isEmailVerified: true } },
     );
   }
 }

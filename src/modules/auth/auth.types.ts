@@ -26,8 +26,12 @@ export interface IRefreshTokenPlainResponse {
   updatedAt: Date;
 }
 
-export type RegisterResultDto = {
-  user: UserResponseDto;
+export type VerifyEmailResultDto = {
+  message: string;
+};
+
+export type ResendVerificationResultDto = {
+  message: string;
 };
 
 export type LoginResultDto = {

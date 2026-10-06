@@ -1,10 +1,11 @@
 import { env } from '@src/config/env.js';
+import { TIME_MS } from '@src/shared/utils/constants.js';
 import { logger } from '@src/shared/utils/logger.js';
 import mongoose from 'mongoose';
 
-const SERVER_SELECTION_TIMEOUT_MS = 5_000;
-const SOCKET_TIMEOUT_MS = 45_000;
-const HEARTBEAT_FREQUENCY_MS = 10_000;
+const SERVER_SELECTION_TIMEOUT_MS = 5 * TIME_MS.SECOND;
+const SOCKET_TIMEOUT_MS = 45 * TIME_MS.SECOND;
+const HEARTBEAT_FREQUENCY_MS = 10 * TIME_MS.SECOND;
 
 mongoose.set('bufferCommands', env.isDevelopment);
 

@@ -1,8 +1,12 @@
+export type AuthProviderType = 'local' | 'google';
+
 export interface IUser {
   fullName: string;
   email: string;
   password: string;
   profileImage: string;
+  isEmailVerified: boolean;
+  authProviders: AuthProviderType[];
 }
 
 export interface IUserPlainDBResponse extends IUser {
@@ -11,4 +15,7 @@ export interface IUserPlainDBResponse extends IUser {
   updatedAt: Date;
 }
 
-export type UserResponseDto = Omit<IUserPlainDBResponse, 'password'>;
+export type UserResponseDto = Omit<
+  IUserPlainDBResponse,
+  'password' | 'authProviders' | 'isEmailVerified'
+>;

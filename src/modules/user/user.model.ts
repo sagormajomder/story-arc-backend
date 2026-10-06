@@ -43,6 +43,15 @@ const userSchema = new mongoose.Schema<IUserDocuments>(
       type: String,
       default: VALIDATIONS.DEFAULT_PROFILE_IMAGE,
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    authProviders: {
+      type: [String],
+      enum: ['local', 'google'],
+      default: ['local'],
+    },
   },
   {
     timestamps: true,
