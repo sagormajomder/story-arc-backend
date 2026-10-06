@@ -208,6 +208,15 @@ export class AuthService implements IAuthService {
 
     await this.userSvc.markEmailAsVerified(user.id);
     await this.verificationTokenRepo.deleteAllByUserId(user.id);
+
+    try {
+      await this.mailer.sendRegistrationSuccessEmail(user.email, user.fullName);
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id, email: user.email },
+        'Failed to send registration success confirmation email',
+      );
+    }
   }
 
   async resendVerification(
@@ -425,6 +434,18 @@ export class AuthService implements IAuthService {
 
     // Invalidate ALL refresh tokens (force re-login on all devices)
     await this.refreshTokenRepo.deleteAllByUserId(user.id);
+
+    try {
+      await this.mailer.sendPasswordResetSuccessEmail(
+        user.email,
+        user.fullName,
+      );
+    } catch (error) {
+      logger.error(
+        { error, userId: user.id, email: user.email },
+        'Failed to send password reset success confirmation email',
+      );
+    }
   }
 }
 

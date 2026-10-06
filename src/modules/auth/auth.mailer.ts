@@ -4,6 +4,8 @@ import {
   getGoogleAccountNoticeEmailTemplate,
   getGoogleAccountPasswordResetNoticeEmailTemplate,
   getPasswordResetEmailTemplate,
+  getPasswordResetSuccessEmailTemplate,
+  getRegistrationSuccessEmailTemplate,
   getVerificationEmailTemplate,
 } from '@src/modules/auth/auth.email-templates.js';
 import {
@@ -33,6 +35,14 @@ export interface IAuthMailer {
     email: string,
     fullName: string,
     rawToken: string,
+  ): Promise<void>;
+  sendRegistrationSuccessEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void>;
+  sendPasswordResetSuccessEmail(
+    email: string,
+    fullName: string,
   ): Promise<void>;
 }
 
@@ -118,6 +128,36 @@ export class AuthMailer implements IAuthMailer {
       fullName,
       resetUrl,
       expiresMinutes: env.PASSWORD_RESET_EXPIRES_MINUTES,
+    });
+
+    await this.emailSvc.sendEmail({
+      to: email,
+      ...template,
+    });
+  }
+
+  async sendRegistrationSuccessEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void> {
+    const template = getRegistrationSuccessEmailTemplate({
+      fullName,
+      loginUrl: `${this.getClientUrl()}/login`,
+    });
+
+    await this.emailSvc.sendEmail({
+      to: email,
+      ...template,
+    });
+  }
+
+  async sendPasswordResetSuccessEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void> {
+    const template = getPasswordResetSuccessEmailTemplate({
+      fullName,
+      loginUrl: `${this.getClientUrl()}/login`,
     });
 
     await this.emailSvc.sendEmail({

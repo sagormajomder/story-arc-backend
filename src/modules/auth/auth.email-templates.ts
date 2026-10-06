@@ -184,3 +184,46 @@ export const getPasswordResetEmailTemplate = (params: {
   }),
   text: `Hi ${params.fullName},\n\nReset your password using this link: ${params.resetUrl}\n\nThis link expires in ${params.expiresMinutes} minutes.\n\nIf you didn't request this, please ignore this email.`,
 });
+
+export const getRegistrationSuccessEmailTemplate = (params: {
+  fullName: string;
+  loginUrl: string;
+}): IEmailTemplate => ({
+  subject: 'Welcome to Story Arc - Registration Successful',
+  html: renderEmailLayout({
+    heading: 'Welcome to Story Arc!',
+    greetingName: params.fullName,
+    bodyHtml: `
+      <p>Congratulations! Your email address has been verified and your Story Arc account is now fully active.</p>
+      <p>You can now log in to start discovering books, building your reading lists, and sharing reviews with the community.</p>
+    `,
+    primaryButton: {
+      text: 'Log In to Your Account',
+      url: params.loginUrl,
+    },
+    noticeHtml: `<p>If you have any questions or need assistance, feel free to reach out to our support team.</p>`,
+  }),
+  text: `Hi ${params.fullName},\n\nCongratulations! Your email address has been verified and your Story Arc account is now active.\n\nYou can log in here: ${params.loginUrl}\n\nIf you have any questions, feel free to reach out to our support team.`,
+});
+
+export const getPasswordResetSuccessEmailTemplate = (params: {
+  fullName: string;
+  loginUrl: string;
+}): IEmailTemplate => ({
+  subject: 'Password Reset Successful - Story Arc',
+  html: renderEmailLayout({
+    heading: 'Password Reset Successful',
+    greetingName: params.fullName,
+    bodyHtml: `
+      <p>Your password for Story Arc has been successfully updated.</p>
+      <p>All active sessions have been signed out for your security. You can now log in using your new password:</p>
+    `,
+    primaryButton: {
+      text: 'Log In',
+      url: params.loginUrl,
+    },
+    noticeHtml: `<p style="color: #DC2626; font-weight: bold;">Security Notice: If you did not make this change, please contact our support team immediately or reset your password to secure your account.</p>`,
+  }),
+  text: `Hi ${params.fullName},\n\nYour password for Story Arc has been successfully reset. All active sessions have been signed out for security.\n\nYou can log in with your new password here: ${params.loginUrl}\n\nSecurity Notice: If you did not make this change, please contact our support team immediately.`,
+});
+
