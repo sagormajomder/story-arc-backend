@@ -3,6 +3,7 @@ import { authService } from '@src/modules/auth/auth.service.js';
 import type { IDeviceInfo } from '@src/modules/auth/auth.types.js';
 import type {
   ForgotPasswordDto,
+  GoogleLoginDto,
   LoginDto,
   RegisterDto,
   ResendVerificationDto,
@@ -121,6 +122,37 @@ export const loginUserCntlr = asyncCatch(
       statusCode: HTTP_STATUS.OK,
       success: true,
       message: 'User logged in successfully',
+      data: {
+        user,
+        accessToken,
+      },
+    });
+  },
+);
+
+export const googleLoginCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const googleLoginDto: GoogleLoginDto = req.body;
+    const deviceInfo = extractDeviceInfo(req);
+
+    const { user, accessToken, refreshToken } = await authService.googleLogin(
+      googleLoginDto,
+      deviceInfo,
+    );
+
+    res.cookie(
+      COOKIE_CONFIG.REFRESH_TOKEN_NAME,
+      refreshToken,
+      getCookieOptions(
+        env.COOKIE_REFRESH_TOKEN_MAX_AGE,
+        COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+      ),
+    );
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message: 'Logged in successfully with Google',
       data: {
         user,
         accessToken,

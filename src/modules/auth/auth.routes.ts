@@ -1,5 +1,6 @@
 import {
   forgotPasswordCntlr,
+  googleLoginCntlr,
   loginUserCntlr,
   logoutUserCntlr,
   refreshTokenCntlr,
@@ -10,6 +11,7 @@ import {
 } from '@src/modules/auth/auth.controller.js';
 import {
   forgotPasswordSchema,
+  googleLoginSchema,
   loginSchema,
   registerSchema,
   resendVerificationSchema,
@@ -47,6 +49,12 @@ authRoutes.post(
   resendVerificationCntlr,
 );
 authRoutes.post('/login', authLimiter, validate(loginSchema), loginUserCntlr);
+authRoutes.post(
+  '/google',
+  authLimiter,
+  validate(googleLoginSchema),
+  googleLoginCntlr,
+);
 authRoutes.post(
   '/forgot-password',
   authLimiter,

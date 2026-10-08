@@ -227,3 +227,46 @@ export const getPasswordResetSuccessEmailTemplate = (params: {
   text: `Hi ${params.fullName},\n\nYour password for Story Arc has been successfully reset. All active sessions have been signed out for security.\n\nYou can log in with your new password here: ${params.loginUrl}\n\nSecurity Notice: If you did not make this change, please contact our support team immediately.`,
 });
 
+export const getGoogleWelcomeEmailTemplate = (params: {
+  fullName: string;
+  loginUrl: string;
+}): IEmailTemplate => ({
+  subject: 'Welcome to Story Arc - Registration Successful',
+  html: renderEmailLayout({
+    heading: 'Welcome to Story Arc!',
+    greetingName: params.fullName,
+    bodyHtml: `
+      <p>Welcome to Story Arc! Your account has been created and verified using Google Sign-In.</p>
+      <p>You can now start discovering books, building your reading lists, and sharing reviews with the community.</p>
+    `,
+    primaryButton: {
+      text: 'Explore Story Arc',
+      url: params.loginUrl,
+    },
+    noticeHtml: `<p>If you have any questions or need assistance, feel free to reach out to our support team.</p>`,
+  }),
+  text: `Hi ${params.fullName},\n\nWelcome to Story Arc! Your account has been created and verified using Google Sign-In.\n\nStart exploring here: ${params.loginUrl}\n\nIf you have any questions, feel free to reach out to our support team.`,
+});
+
+export const getGoogleAccountLinkedSecurityEmailTemplate = (params: {
+  fullName: string;
+  loginUrl: string;
+}): IEmailTemplate => ({
+  subject: 'Security Alert: Google Sign-In Linked - Story Arc',
+  html: renderEmailLayout({
+    heading: 'Security Alert: Google Sign-In Linked',
+    greetingName: params.fullName,
+    bodyHtml: `
+      <p>Google Sign-In has recently been connected to your Story Arc account.</p>
+      <p>You can now sign in using either your existing email and password or Google Sign-In.</p>
+    `,
+    primaryButton: {
+      text: 'View Your Account',
+      url: params.loginUrl,
+    },
+    noticeHtml: `<p style="color: #DC2626; font-weight: bold;">Security Notice: If you did not link your Google account, please change your password immediately and contact our support team.</p>`,
+  }),
+  text: `Hi ${params.fullName},\n\nGoogle Sign-In has been connected to your Story Arc account.\n\nYou can sign in using your existing password or Google Sign-In.\n\nSecurity Notice: If you did not link your Google account, please change your password immediately and contact our support team.\n\nLogin URL: ${params.loginUrl}`,
+});
+
+

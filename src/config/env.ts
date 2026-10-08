@@ -296,6 +296,10 @@ const envSchema = z.object({
       })
       .default(DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX),
   ),
+  GOOGLE_CLIENT_ID: z.preprocess(
+    emptyStringToUndefined,
+    z.string({ error: 'GOOGLE_CLIENT_ID must be a string' }).optional(),
+  ),
 });
 
 const result = envSchema.safeParse(process.env);

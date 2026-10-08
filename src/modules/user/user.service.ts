@@ -23,6 +23,23 @@ export interface IUserService {
     userId: string,
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
+  findByGoogleId(googleId: string): Promise<IUserPlainDBResponse | null>;
+  createGoogleUser(data: {
+    fullName: string;
+    email: string;
+    profileImage: string;
+    googleId: string;
+  }): Promise<IUserPlainDBResponse>;
+  linkGoogleAccount(
+    userId: string,
+    googleId: string,
+    profileImage?: string,
+  ): Promise<IUserPlainDBResponse>;
+  claimAccountAsGoogle(
+    userId: string,
+    googleId: string,
+    profileImage?: string,
+  ): Promise<IUserPlainDBResponse>;
   updatePassword(userId: string, newPassword: string): Promise<void>;
   markEmailAsVerified(userId: string): Promise<void>;
 }
@@ -34,14 +51,19 @@ export class UserService implements IUserService {
   ) {}
 
   async createUser(userData: IUser): Promise<{ user: UserResponseDto }> {
-    const hashedPassword = await this.passwordHasher.hash(userData.password);
+    const hashedPassword = await this.passwordHasher.hash(userData.password!);
     const user = await this.repo.create({
       ...userData,
       password: hashedPassword,
     });
-    const userWithoutPassword = excludeFields(user, ['password']);
+
     return {
-      user: userWithoutPassword,
+      user: excludeFields(user, [
+        'password',
+        'authProviders',
+        'isEmailVerified',
+        'googleId',
+      ]),
     };
   }
 
@@ -57,6 +79,35 @@ export class UserService implements IUserService {
     includePassword = false,
   ): Promise<IUserPlainDBResponse | null> {
     return this.repo.findById(userId, includePassword);
+  }
+
+  async findByGoogleId(googleId: string): Promise<IUserPlainDBResponse | null> {
+    return this.repo.findByGoogleId(googleId);
+  }
+
+  async createGoogleUser(data: {
+    fullName: string;
+    email: string;
+    profileImage: string;
+    googleId: string;
+  }): Promise<IUserPlainDBResponse> {
+    return this.repo.createGoogleUser(data);
+  }
+
+  async linkGoogleAccount(
+    userId: string,
+    googleId: string,
+    profileImage?: string,
+  ): Promise<IUserPlainDBResponse> {
+    return this.repo.linkGoogleAccount(userId, googleId, profileImage);
+  }
+
+  async claimAccountAsGoogle(
+    userId: string,
+    googleId: string,
+    profileImage?: string,
+  ): Promise<IUserPlainDBResponse> {
+    return this.repo.claimAccountAsGoogle(userId, googleId, profileImage);
   }
 
   async updatePassword(userId: string, newPassword: string): Promise<void> {

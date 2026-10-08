@@ -8,6 +8,7 @@ import type {
 } from '@src/modules/auth/auth.types.js';
 import type {
   ForgotPasswordDto,
+  GoogleLoginDto,
   LoginDto,
   RegisterDto,
   ResendVerificationDto,
@@ -41,9 +42,14 @@ import {
   tokenService,
   type ITokenService,
 } from '@src/shared/services/token.service.js';
-import { HTTP_STATUS, TIME_MS } from '@src/shared/utils/constants.js';
+import {
+  HTTP_STATUS,
+  TIME_MS,
+  VALIDATIONS,
+} from '@src/shared/utils/constants.js';
 import { excludeFields } from '@src/shared/utils/excludeFields.js';
 import { logger } from '@src/shared/utils/logger.js';
+import { OAuth2Client } from 'google-auth-library';
 import { randomBytes, randomUUID } from 'node:crypto';
 
 export interface IAuthService {
@@ -53,6 +59,10 @@ export interface IAuthService {
     resendVerificationDto: ResendVerificationDto,
   ): Promise<void>;
   login(loginDto: LoginDto, deviceInfo?: IDeviceInfo): Promise<LoginResultDto>;
+  googleLogin(
+    googleLoginDto: GoogleLoginDto,
+    deviceInfo?: IDeviceInfo,
+  ): Promise<LoginResultDto>;
   refreshTokens(
     refreshToken: string,
     deviceInfo?: IDeviceInfo,
@@ -63,6 +73,8 @@ export interface IAuthService {
 }
 
 export class AuthService implements IAuthService {
+  private readonly googleClient: OAuth2Client;
+
   constructor(
     private readonly userSvc: IUserService = userService,
     private readonly passwordHasher: IPasswordHasher = argon2PasswordHasher,
@@ -72,7 +84,37 @@ export class AuthService implements IAuthService {
     private readonly resetTokenRepo: IPasswordResetTokenRepository = passwordResetTokenRepository,
     private readonly verificationTokenRepo: IEmailVerificationTokenRepository = emailVerificationTokenRepository,
     private readonly mailer: IAuthMailer = authMailer,
-  ) {}
+  ) {
+    this.googleClient = new OAuth2Client(env.GOOGLE_CLIENT_ID);
+  }
+
+  private async verifyGoogleIdToken(idToken: string) {
+    if (!env.GOOGLE_CLIENT_ID) {
+      throw new AppError(
+        'Google authentication is not configured',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    try {
+      const ticket = await this.googleClient.verifyIdToken({
+        idToken,
+        audience: env.GOOGLE_CLIENT_ID,
+      });
+      const payload = ticket.getPayload();
+      if (!payload) {
+        throw new AppError('Invalid Google ID token', HTTP_STATUS.UNAUTHORIZED);
+      }
+      return payload;
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      logger.warn({ error }, 'Google ID token verification failed');
+      throw new AppError(
+        'Failed to verify Google token',
+        HTTP_STATUS.UNAUTHORIZED,
+      );
+    }
+  }
 
   private generateOpaqueToken(): { rawToken: string; tokenHash: string } {
     const rawToken = randomBytes(32).toString('hex');
@@ -261,14 +303,135 @@ export class AuthService implements IAuthService {
       deviceInfo,
     );
 
-    const userWithoutPassword = excludeFields(existingUser, [
-      'password',
-      'authProviders',
-      'isEmailVerified',
-    ]);
+    return {
+      user: excludeFields(existingUser, [
+        'password',
+        'authProviders',
+        'isEmailVerified',
+        'googleId',
+      ]),
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async googleLogin(
+    googleLoginDto: GoogleLoginDto,
+    deviceInfo?: IDeviceInfo,
+  ): Promise<LoginResultDto> {
+    const payload = await this.verifyGoogleIdToken(googleLoginDto.idToken);
+    const { sub: googleId, email, name, picture, email_verified } = payload;
+
+    if (!email_verified || !email) {
+      throw new AppError(
+        'Google account email is not verified',
+        HTTP_STATUS.BAD_REQUEST,
+      );
+    }
+
+    // 1. Check if user already exists with this googleId
+    let user = await this.userSvc.findByGoogleId(googleId);
+
+    if (user) {
+      // Subsequent / Recurring Google login -> NO EMAIL SENT
+      const familyId = randomUUID();
+      const { accessToken, refreshToken } = await this.issueSessionTokens(
+        user.id,
+        user.email,
+        familyId,
+        deviceInfo,
+      );
+
+      return {
+        user: excludeFields(user, [
+          'password',
+          'authProviders',
+          'isEmailVerified',
+          'googleId',
+        ]),
+        accessToken,
+        refreshToken,
+      };
+    }
+
+    // 2. User not found by googleId -> Check by email
+    const existingUserByEmail = await this.userSvc.findByEmail(email);
+
+    if (existingUserByEmail) {
+      if (existingUserByEmail.isEmailVerified) {
+        // CASE: Existing verified local user -> Auto-link Google
+        user = await this.userSvc.linkGoogleAccount(
+          existingUserByEmail.id,
+          googleId,
+          picture,
+        );
+
+        // Security Alert Email: notify that Google login was linked
+        try {
+          await this.mailer.sendGoogleAccountLinkedSecurityEmail(
+            user.email,
+            user.fullName,
+          );
+        } catch (error) {
+          logger.error(
+            { error, userId: user.id, email: user.email },
+            'Failed to send Google account linked security email',
+          );
+        }
+      } else {
+        // CASE: Existing unverified account -> Pre-hijacking prevention: Wipe unverified password and claim as Google account
+        user = await this.userSvc.claimAccountAsGoogle(
+          existingUserByEmail.id,
+          googleId,
+          picture,
+        );
+
+        // First-time verified onboarding via Google -> Welcome Email
+        try {
+          await this.mailer.sendGoogleWelcomeEmail(user.email, user.fullName);
+        } catch (error) {
+          logger.error(
+            { error, userId: user.id, email: user.email },
+            'Failed to send Google welcome email',
+          );
+        }
+      }
+    } else {
+      // CASE: Brand new user -> Create user
+      user = await this.userSvc.createGoogleUser({
+        fullName: name || 'Google User',
+        email,
+        profileImage: picture || VALIDATIONS.DEFAULT_PROFILE_IMAGE,
+        googleId,
+      });
+
+      // First-time registration -> Welcome Email
+      try {
+        await this.mailer.sendGoogleWelcomeEmail(user.email, user.fullName);
+      } catch (error) {
+        logger.error(
+          { error, userId: user.id, email: user.email },
+          'Failed to send Google welcome email',
+        );
+      }
+    }
+
+    // 3. Issue session tokens
+    const familyId = randomUUID();
+    const { accessToken, refreshToken } = await this.issueSessionTokens(
+      user.id,
+      user.email,
+      familyId,
+      deviceInfo,
+    );
 
     return {
-      user: userWithoutPassword,
+      user: excludeFields(user, [
+        'password',
+        'authProviders',
+        'isEmailVerified',
+        'googleId',
+      ]),
       accessToken,
       refreshToken,
     };
@@ -285,22 +448,39 @@ export class AuthService implements IAuthService {
 
     // Reuse detection:
     // If the token is not found in DB OR was already marked as revoked/used:
-    if (!storedToken || storedToken.isRevoked) {
-      const familyId =
-        storedToken?.familyId ?? (payload.familyId as string | undefined);
-
+    if (!storedToken) {
+      const familyId = payload.familyId as string | undefined;
       if (familyId) {
         logger.warn(
           { userId: payload.userId, familyId },
-          'Refresh token reuse detected! Revoking all tokens in session family.',
+          'Unknown refresh token used! Revoking session family.',
         );
         await this.refreshTokenRepo.deleteAllByFamilyId(familyId);
       }
-
       throw new AppError(
         'Invalid or revoked refresh token',
         HTTP_STATUS.UNAUTHORIZED,
       );
+    }
+
+    if (storedToken.isRevoked) {
+      const isWithinGracePeriod =
+        storedToken.updatedAt &&
+        Date.now() - new Date(storedToken.updatedAt).getTime() < 30 * TIME_MS.SECOND;
+
+      if (!isWithinGracePeriod) {
+        const familyId = storedToken.familyId;
+        logger.warn(
+          { userId: payload.userId, familyId },
+          'Refresh token reuse detected beyond grace period! Revoking all tokens in session family.',
+        );
+        await this.refreshTokenRepo.deleteAllByFamilyId(familyId);
+
+        throw new AppError(
+          'Invalid or revoked refresh token',
+          HTTP_STATUS.UNAUTHORIZED,
+        );
+      }
     }
 
     // Token Rotation: mark the previous refresh token as revoked immediately

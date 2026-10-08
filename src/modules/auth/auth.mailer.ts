@@ -1,8 +1,10 @@
 import { env } from '@src/config/env.js';
 import {
   getAccountAlreadyExistsEmailTemplate,
+  getGoogleAccountLinkedSecurityEmailTemplate,
   getGoogleAccountNoticeEmailTemplate,
   getGoogleAccountPasswordResetNoticeEmailTemplate,
+  getGoogleWelcomeEmailTemplate,
   getPasswordResetEmailTemplate,
   getPasswordResetSuccessEmailTemplate,
   getRegistrationSuccessEmailTemplate,
@@ -41,6 +43,14 @@ export interface IAuthMailer {
     fullName: string,
   ): Promise<void>;
   sendPasswordResetSuccessEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void>;
+  sendGoogleWelcomeEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void>;
+  sendGoogleAccountLinkedSecurityEmail(
     email: string,
     fullName: string,
   ): Promise<void>;
@@ -156,6 +166,36 @@ export class AuthMailer implements IAuthMailer {
     fullName: string,
   ): Promise<void> {
     const template = getPasswordResetSuccessEmailTemplate({
+      fullName,
+      loginUrl: `${this.getClientUrl()}/login`,
+    });
+
+    await this.emailSvc.sendEmail({
+      to: email,
+      ...template,
+    });
+  }
+
+  async sendGoogleWelcomeEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void> {
+    const template = getGoogleWelcomeEmailTemplate({
+      fullName,
+      loginUrl: `${this.getClientUrl()}/login`,
+    });
+
+    await this.emailSvc.sendEmail({
+      to: email,
+      ...template,
+    });
+  }
+
+  async sendGoogleAccountLinkedSecurityEmail(
+    email: string,
+    fullName: string,
+  ): Promise<void> {
+    const template = getGoogleAccountLinkedSecurityEmailTemplate({
       fullName,
       loginUrl: `${this.getClientUrl()}/login`,
     });

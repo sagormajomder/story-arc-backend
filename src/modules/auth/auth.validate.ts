@@ -201,4 +201,21 @@ export const resendVerificationSchema = z.object({
 export type ResendVerificationDto =
   z.infer<typeof resendVerificationSchema>['body'];
 
+export const googleLoginSchema = z.object({
+  body: z.strictObject({
+    idToken: z
+      .string({
+        error: iss =>
+          iss.input === undefined
+            ? 'Google ID token is required'
+            : 'Google ID token must be a string',
+      })
+      .trim()
+      .min(1, { error: 'Google ID token cannot be empty' }),
+  }),
+});
+
+export type GoogleLoginDto = z.infer<typeof googleLoginSchema>['body'];
+
+
 

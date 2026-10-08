@@ -32,7 +32,12 @@ const userSchema = new mongoose.Schema<IUserDocuments>(
     },
     password: {
       type: String,
-      required: [true, 'Password is required'],
+      required: [
+        function (this: IUserDocuments) {
+          return this.authProviders?.includes('local') && !this.password;
+        },
+        'Password is required',
+      ],
       minLength: [
         VALIDATIONS.PASSWORD_MIN_LENGTH,
         `Password Must be at least ${VALIDATIONS.PASSWORD_MIN_LENGTH} characters`,
@@ -51,6 +56,11 @@ const userSchema = new mongoose.Schema<IUserDocuments>(
       type: [String],
       enum: ['local', 'google'],
       default: ['local'],
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true,
     },
   },
   {
