@@ -202,20 +202,36 @@ export type ResendVerificationDto =
   z.infer<typeof resendVerificationSchema>['body'];
 
 export const googleLoginSchema = z.object({
-  body: z.strictObject({
-    idToken: z
-      .string({
-        error: iss =>
-          iss.input === undefined
-            ? 'Google ID token is required'
-            : 'Google ID token must be a string',
-      })
-      .trim()
-      .min(1, { error: 'Google ID token cannot be empty' }),
-  }),
+  body: z
+    .strictObject({
+      idToken: z
+        .string({
+          error: iss =>
+            iss.input === undefined
+              ? 'Google ID token is required'
+              : 'Google ID token must be a string',
+        })
+        .trim()
+        .min(1, { error: 'Google ID token cannot be empty' })
+        .optional(),
+      accessToken: z
+        .string({
+          error: iss =>
+            iss.input === undefined
+              ? 'Google access token is required'
+              : 'Google access token must be a string',
+        })
+        .trim()
+        .min(1, { error: 'Google access token cannot be empty' })
+        .optional(),
+    })
+    .refine(data => Boolean(data.idToken || data.accessToken), {
+      message: 'Either Google idToken or accessToken is required',
+    }),
 });
 
 export type GoogleLoginDto = z.infer<typeof googleLoginSchema>['body'];
+
 
 
 

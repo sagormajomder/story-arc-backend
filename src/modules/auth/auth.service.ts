@@ -116,6 +116,53 @@ export class AuthService implements IAuthService {
     }
   }
 
+  private async verifyGoogleAccessToken(accessToken: string) {
+    if (!env.GOOGLE_CLIENT_ID) {
+      throw new AppError(
+        'Google authentication is not configured',
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      );
+    }
+
+    try {
+      const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: `Bearer ${accessToken}` },
+      });
+
+      if (!res.ok) {
+        throw new AppError('Invalid Google access token', HTTP_STATUS.UNAUTHORIZED);
+      }
+
+      const data = (await res.json()) as {
+        sub?: string;
+        email?: string;
+        name?: string;
+        picture?: string;
+        email_verified?: boolean | string;
+      };
+
+      if (!data.sub || !data.email) {
+        throw new AppError('Invalid Google user profile', HTTP_STATUS.UNAUTHORIZED);
+      }
+
+      return {
+        sub: data.sub,
+        email: data.email,
+        name: data.name,
+        picture: data.picture,
+        email_verified: data.email_verified === true || data.email_verified === 'true',
+      };
+    } catch (error) {
+      if (error instanceof AppError) throw error;
+      logger.warn({ error }, 'Google access token verification failed');
+      throw new AppError(
+        'Failed to verify Google access token',
+        HTTP_STATUS.UNAUTHORIZED,
+      );
+    }
+  }
+
+
   private generateOpaqueToken(): { rawToken: string; tokenHash: string } {
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = this.tokenHasher.hash(rawToken);
@@ -319,7 +366,9 @@ export class AuthService implements IAuthService {
     googleLoginDto: GoogleLoginDto,
     deviceInfo?: IDeviceInfo,
   ): Promise<LoginResultDto> {
-    const payload = await this.verifyGoogleIdToken(googleLoginDto.idToken);
+    const payload = googleLoginDto.accessToken
+      ? await this.verifyGoogleAccessToken(googleLoginDto.accessToken)
+      : await this.verifyGoogleIdToken(googleLoginDto.idToken!);
     const { sub: googleId, email, name, picture, email_verified } = payload;
 
     if (!email_verified || !email) {
