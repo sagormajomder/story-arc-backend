@@ -16,18 +16,27 @@ import { COOKIE_CONFIG, HTTP_STATUS } from '@src/shared/utils/constants.js';
 import sendResponse from '@src/shared/utils/sendResponse.js';
 import type { Request, Response } from 'express';
 
-const getCookieOptions = (maxAge: number, path = '/') => ({
+type SameSiteOption = 'strict' | 'lax' | 'none';
+
+const getCookieOptions = (
+  maxAge: number,
+  path = '/',
+  sameSite: SameSiteOption = 'lax',
+) => ({
   httpOnly: true,
   secure: env.isProduction,
-  sameSite: env.isProduction ? ('none' as const) : ('lax' as const),
+  sameSite,
   maxAge,
   path,
 });
 
-const getClearCookieOptions = (path = '/') => ({
+const getClearCookieOptions = (
+  path = '/',
+  sameSite: SameSiteOption = 'lax',
+) => ({
   httpOnly: true,
   secure: env.isProduction,
-  sameSite: env.isProduction ? ('none' as const) : ('lax' as const),
+  sameSite,
   path,
 });
 
@@ -103,11 +112,15 @@ export const loginUserCntlr = asyncCatch(
       deviceInfo,
     );
 
-    // res.cookie(
-    //   COOKIE_CONFIG.ACCESS_TOKEN_NAME,
-    //   accessToken,
-    //   getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
-    // );
+    res.cookie(
+      COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+      accessToken,
+      getCookieOptions(
+        env.COOKIE_ACCESS_TOKEN_MAX_AGE,
+        COOKIE_CONFIG.ACCESS_COOKIE_PATH,
+        'lax',
+      ),
+    );
 
     res.cookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
@@ -115,6 +128,7 @@ export const loginUserCntlr = asyncCatch(
       getCookieOptions(
         env.COOKIE_REFRESH_TOKEN_MAX_AGE,
         COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+        'strict',
       ),
     );
 
@@ -141,11 +155,22 @@ export const googleLoginCntlr = asyncCatch(
     );
 
     res.cookie(
+      COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+      accessToken,
+      getCookieOptions(
+        env.COOKIE_ACCESS_TOKEN_MAX_AGE,
+        COOKIE_CONFIG.ACCESS_COOKIE_PATH,
+        'lax',
+      ),
+    );
+
+    res.cookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
       refreshToken,
       getCookieOptions(
         env.COOKIE_REFRESH_TOKEN_MAX_AGE,
         COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+        'strict',
       ),
     );
 
@@ -175,11 +200,15 @@ export const refreshTokenCntlr = asyncCatch(
         deviceInfo,
       );
 
-      // res.cookie(
-      //   COOKIE_CONFIG.ACCESS_TOKEN_NAME,
-      //   accessToken,
-      //   getCookieOptions(env.COOKIE_ACCESS_TOKEN_MAX_AGE),
-      // );
+      res.cookie(
+        COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+        accessToken,
+        getCookieOptions(
+          env.COOKIE_ACCESS_TOKEN_MAX_AGE,
+          COOKIE_CONFIG.ACCESS_COOKIE_PATH,
+          'lax',
+        ),
+      );
 
       res.cookie(
         COOKIE_CONFIG.REFRESH_TOKEN_NAME,
@@ -187,6 +216,7 @@ export const refreshTokenCntlr = asyncCatch(
         getCookieOptions(
           env.COOKIE_REFRESH_TOKEN_MAX_AGE,
           COOKIE_CONFIG.REFRESH_COOKIE_PATH,
+          'strict',
         ),
       );
 
@@ -199,10 +229,13 @@ export const refreshTokenCntlr = asyncCatch(
         },
       });
     } catch (error) {
-      res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, getClearCookieOptions());
+      res.clearCookie(
+        COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+        getClearCookieOptions(COOKIE_CONFIG.ACCESS_COOKIE_PATH, 'lax'),
+      );
       res.clearCookie(
         COOKIE_CONFIG.REFRESH_TOKEN_NAME,
-        getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH),
+        getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH, 'strict'),
       );
       throw error;
     }
@@ -216,10 +249,13 @@ export const logoutUserCntlr = asyncCatch(
       await authService.logout(refreshToken);
     }
 
-    // res.clearCookie(COOKIE_CONFIG.ACCESS_TOKEN_NAME, getClearCookieOptions());
+    res.clearCookie(
+      COOKIE_CONFIG.ACCESS_TOKEN_NAME,
+      getClearCookieOptions(COOKIE_CONFIG.ACCESS_COOKIE_PATH, 'lax'),
+    );
     res.clearCookie(
       COOKIE_CONFIG.REFRESH_TOKEN_NAME,
-      getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH),
+      getClearCookieOptions(COOKIE_CONFIG.REFRESH_COOKIE_PATH, 'strict'),
     );
 
     sendResponse(res, {

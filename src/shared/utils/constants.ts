@@ -33,6 +33,7 @@ export const HTTP_STATUS = {
 export const COOKIE_CONFIG = {
   ACCESS_TOKEN_NAME: 'accessToken',
   REFRESH_TOKEN_NAME: 'refreshToken',
+  ACCESS_COOKIE_PATH: '/',
   REFRESH_COOKIE_PATH: '/api/v1/auth',
 } as const;
 

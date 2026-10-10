@@ -21,14 +21,8 @@ export interface IAuthMailer {
     fullName: string,
     rawToken: string,
   ): Promise<void>;
-  sendAccountAlreadyExistsEmail(
-    email: string,
-    fullName: string,
-  ): Promise<void>;
-  sendGoogleAccountNoticeEmail(
-    email: string,
-    fullName: string,
-  ): Promise<void>;
+  sendAccountAlreadyExistsEmail(email: string, fullName: string): Promise<void>;
+  sendGoogleAccountNoticeEmail(email: string, fullName: string): Promise<void>;
   sendGoogleAccountPasswordResetNoticeEmail(
     email: string,
     fullName: string,
@@ -38,18 +32,9 @@ export interface IAuthMailer {
     fullName: string,
     rawToken: string,
   ): Promise<void>;
-  sendRegistrationSuccessEmail(
-    email: string,
-    fullName: string,
-  ): Promise<void>;
-  sendPasswordResetSuccessEmail(
-    email: string,
-    fullName: string,
-  ): Promise<void>;
-  sendGoogleWelcomeEmail(
-    email: string,
-    fullName: string,
-  ): Promise<void>;
+  sendRegistrationSuccessEmail(email: string, fullName: string): Promise<void>;
+  sendPasswordResetSuccessEmail(email: string, fullName: string): Promise<void>;
+  sendGoogleWelcomeEmail(email: string, fullName: string): Promise<void>;
   sendGoogleAccountLinkedSecurityEmail(
     email: string,
     fullName: string,
@@ -60,7 +45,7 @@ export class AuthMailer implements IAuthMailer {
   constructor(private readonly emailSvc: IEmailService = emailService) {}
 
   private getClientUrl(): string {
-    return env.CLIENT_URLS[0] ?? 'http://localhost:3000';
+    return env.CLIENT_URL ?? 'http://localhost:3000';
   }
 
   async sendVerificationEmail(
@@ -176,10 +161,7 @@ export class AuthMailer implements IAuthMailer {
     });
   }
 
-  async sendGoogleWelcomeEmail(
-    email: string,
-    fullName: string,
-  ): Promise<void> {
+  async sendGoogleWelcomeEmail(email: string, fullName: string): Promise<void> {
     const template = getGoogleWelcomeEmailTemplate({
       fullName,
       loginUrl: `${this.getClientUrl()}/login`,

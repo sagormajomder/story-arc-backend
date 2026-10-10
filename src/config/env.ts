@@ -105,6 +105,13 @@ const envSchema = z.object({
       .transform(urls => [...new Set(urls)])
       .default([...DEFAULT_CLIENT_URLS]),
   ),
+  CLIENT_URL: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .url({ error: 'CLIENT_URL must be a valid URL' })
+      .transform(url => new URL(url).origin)
+      .optional(),
+  ),
   RATE_LIMIT_WINDOW_MINUTES: z.preprocess(
     emptyStringToUndefined,
     z.coerce
@@ -205,10 +212,7 @@ const envSchema = z.object({
       })
       .default(DEFAULT_JWT_REFRESH_EXPIRES_IN),
   ),
-  BREVO_API_KEY: z.preprocess(
-    emptyStringToUndefined,
-    z.string().optional(),
-  ),
+  BREVO_API_KEY: z.preprocess(emptyStringToUndefined, z.string().optional()),
   EMAIL_FROM_NAME: z.preprocess(
     emptyStringToUndefined,
     z.string().default(DEFAULT_EMAIL_FROM_NAME),
@@ -318,6 +322,7 @@ type ParseEnv = z.infer<typeof envSchema>;
 
 type Env = Readonly<
   ParseEnv & {
+    CLIENT_URL: string;
     COOKIE_ACCESS_TOKEN_MAX_AGE: number;
     COOKIE_REFRESH_TOKEN_MAX_AGE: number;
     isDevelopment: boolean;
@@ -327,6 +332,12 @@ type Env = Readonly<
 
 export const env: Env = Object.freeze({
   ...data,
+  CLIENT_URL:
+    data.CLIENT_URL ??
+    data.CLIENT_URLS[0] ??
+    (data.NODE_ENV === 'production'
+      ? 'https://app.storyarc.sagormajomder.com'
+      : 'http://localhost:3000'),
   COOKIE_ACCESS_TOKEN_MAX_AGE: ms(data.JWT_ACCESS_EXPIRES_IN as StringValue),
   COOKIE_REFRESH_TOKEN_MAX_AGE: ms(data.JWT_REFRESH_EXPIRES_IN as StringValue),
   isDevelopment: data.NODE_ENV === 'development',
