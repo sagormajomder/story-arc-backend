@@ -1,4 +1,11 @@
+import type { UserRole } from '@src/shared/utils/constants.js';
 import type { NextFunction, Request, Response } from 'express';
+
+export interface IAuthUser {
+  userId: string;
+  email: string;
+  role: UserRole;
+}
 
 export type asyncCatchFn = (
   req: Request,

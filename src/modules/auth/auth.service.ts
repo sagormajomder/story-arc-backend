@@ -45,7 +45,9 @@ import {
 import {
   HTTP_STATUS,
   TIME_MS,
+  USER_ROLES,
   VALIDATIONS,
+  type UserRole,
 } from '@src/shared/utils/constants.js';
 import { excludeFields } from '@src/shared/utils/excludeFields.js';
 import { logger } from '@src/shared/utils/logger.js';
@@ -130,7 +132,10 @@ export class AuthService implements IAuthService {
       });
 
       if (!res.ok) {
-        throw new AppError('Invalid Google access token', HTTP_STATUS.UNAUTHORIZED);
+        throw new AppError(
+          'Invalid Google access token',
+          HTTP_STATUS.UNAUTHORIZED,
+        );
       }
 
       const data = (await res.json()) as {
@@ -142,7 +147,10 @@ export class AuthService implements IAuthService {
       };
 
       if (!data.sub || !data.email) {
-        throw new AppError('Invalid Google user profile', HTTP_STATUS.UNAUTHORIZED);
+        throw new AppError(
+          'Invalid Google user profile',
+          HTTP_STATUS.UNAUTHORIZED,
+        );
       }
 
       return {
@@ -150,7 +158,8 @@ export class AuthService implements IAuthService {
         email: data.email,
         name: data.name,
         picture: data.picture,
-        email_verified: data.email_verified === true || data.email_verified === 'true',
+        email_verified:
+          data.email_verified === true || data.email_verified === 'true',
       };
     } catch (error) {
       if (error instanceof AppError) throw error;
@@ -162,7 +171,6 @@ export class AuthService implements IAuthService {
     }
   }
 
-
   private generateOpaqueToken(): { rawToken: string; tokenHash: string } {
     const rawToken = randomBytes(32).toString('hex');
     const tokenHash = this.tokenHasher.hash(rawToken);
@@ -172,12 +180,14 @@ export class AuthService implements IAuthService {
   private async issueSessionTokens(
     userId: string,
     email: string,
+    role: UserRole,
     familyId: string,
     deviceInfo?: IDeviceInfo,
   ): Promise<TokensResultDto> {
     const tokenPayload = {
       userId,
       email,
+      role,
     };
 
     const [accessToken, refreshToken] = await Promise.all([
@@ -241,6 +251,7 @@ export class AuthService implements IAuthService {
     if (!existingUser) {
       const { user } = await this.userSvc.createUser({
         ...registerDto,
+        role: USER_ROLES.USER,
         isEmailVerified: false,
         authProviders: ['local'],
       });
@@ -346,6 +357,7 @@ export class AuthService implements IAuthService {
     const { accessToken, refreshToken } = await this.issueSessionTokens(
       existingUser.id,
       existingUser.email,
+      existingUser.role,
       familyId,
       deviceInfo,
     );
@@ -387,6 +399,7 @@ export class AuthService implements IAuthService {
       const { accessToken, refreshToken } = await this.issueSessionTokens(
         user.id,
         user.email,
+        user.role,
         familyId,
         deviceInfo,
       );
@@ -452,6 +465,7 @@ export class AuthService implements IAuthService {
         email,
         profileImage: picture || VALIDATIONS.DEFAULT_PROFILE_IMAGE,
         googleId,
+        role: USER_ROLES.USER,
       });
 
       // First-time registration -> Welcome Email
@@ -470,6 +484,7 @@ export class AuthService implements IAuthService {
     const { accessToken, refreshToken } = await this.issueSessionTokens(
       user.id,
       user.email,
+      user.role,
       familyId,
       deviceInfo,
     );
@@ -515,7 +530,8 @@ export class AuthService implements IAuthService {
     if (storedToken.isRevoked) {
       const isWithinGracePeriod =
         storedToken.updatedAt &&
-        Date.now() - new Date(storedToken.updatedAt).getTime() < 30 * TIME_MS.SECOND;
+        Date.now() - new Date(storedToken.updatedAt).getTime() <
+          30 * TIME_MS.SECOND;
 
       if (!isWithinGracePeriod) {
         const familyId = storedToken.familyId;
@@ -544,9 +560,15 @@ export class AuthService implements IAuthService {
           : (storedToken.deviceInfo?.ip ?? 'unknown'),
     };
 
+    const user = await this.userSvc.findById(payload.userId);
+    if (!user) {
+      throw new AppError('User not found', HTTP_STATUS.UNAUTHORIZED);
+    }
+
     return this.issueSessionTokens(
-      payload.userId,
-      payload.email,
+      user.id,
+      user.email,
+      user.role,
       storedToken.familyId,
       effectiveDeviceInfo,
     );

@@ -1,9 +1,10 @@
 import { User } from '@src/modules/user/user.model.js';
 import type {
+  ICreateGoogleUserInput,
   IUser,
   IUserPlainDBResponse,
 } from '@src/modules/user/user.types.js';
-import { VALIDATIONS } from '@src/shared/utils/constants.js';
+import { USER_ROLES, VALIDATIONS } from '@src/shared/utils/constants.js';
 
 export interface IUserRepository {
   create(userData: IUser): Promise<IUserPlainDBResponse>;
@@ -16,12 +17,7 @@ export interface IUserRepository {
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
   findByGoogleId(googleId: string): Promise<IUserPlainDBResponse | null>;
-  createGoogleUser(data: {
-    fullName: string;
-    email: string;
-    profileImage: string;
-    googleId: string;
-  }): Promise<IUserPlainDBResponse>;
+  createGoogleUser(data: ICreateGoogleUserInput): Promise<IUserPlainDBResponse>;
   linkGoogleAccount(
     userId: string,
     googleId: string,
@@ -74,9 +70,7 @@ export class UserRepository implements IUserRepository {
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 
-  async findByGoogleId(
-    googleId: string,
-  ): Promise<IUserPlainDBResponse | null> {
+  async findByGoogleId(googleId: string): Promise<IUserPlainDBResponse | null> {
     const userDoc = await this.model.findOne({ googleId }).exec();
     if (!userDoc) {
       return null;
@@ -84,16 +78,14 @@ export class UserRepository implements IUserRepository {
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 
-  async createGoogleUser(data: {
-    fullName: string;
-    email: string;
-    profileImage: string;
-    googleId: string;
-  }): Promise<IUserPlainDBResponse> {
+  async createGoogleUser(
+    data: ICreateGoogleUserInput,
+  ): Promise<IUserPlainDBResponse> {
     const userDoc = await this.model.create({
       ...data,
       isEmailVerified: true,
       authProviders: ['google'],
+      role: data.role ?? USER_ROLES.USER,
     });
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
@@ -149,10 +141,7 @@ export class UserRepository implements IUserRepository {
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 
-  async updatePassword(
-    userId: string,
-    hashedPassword: string,
-  ): Promise<void> {
+  async updatePassword(userId: string, hashedPassword: string): Promise<void> {
     await this.model.updateOne(
       { _id: userId },
       { $set: { password: hashedPassword } },

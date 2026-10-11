@@ -8,6 +8,13 @@ export const VALIDATIONS = {
   DEFAULT_PROFILE_IMAGE: 'https://i.ibb.co.com/fzYGmQj8/avatar-placeholder.gif',
 };
 
+export const USER_ROLES = {
+  USER: 'user',
+  ADMIN: 'admin',
+} as const;
+
+export type UserRole = (typeof USER_ROLES)[keyof typeof USER_ROLES];
+
 export const ARGON2_CONFIG = {
   memoryCost: 19456,
   timeCost: 2,
@@ -33,7 +40,7 @@ export const HTTP_STATUS = {
 export const COOKIE_CONFIG = {
   ACCESS_TOKEN_NAME: 'accessToken',
   REFRESH_TOKEN_NAME: 'refreshToken',
-  ACCESS_COOKIE_PATH: '/',
+  ACCESS_COOKIE_PATH: '/api/v1',
   REFRESH_COOKIE_PATH: '/api/v1/auth',
 } as const;
 
@@ -43,4 +50,3 @@ export const TIME_MS = {
   HOUR: 60 * 60 * 1000,
   DAY: 24 * 60 * 60 * 1000,
 } as const;
-

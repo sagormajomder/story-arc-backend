@@ -1,12 +1,13 @@
 import { env } from '@src/config/env.js';
 import { AppError } from '@src/shared/errors/appError.js';
-import { HTTP_STATUS } from '@src/shared/utils/constants.js';
+import { HTTP_STATUS, type UserRole } from '@src/shared/utils/constants.js';
 import { errors, jwtVerify, SignJWT } from 'jose';
 import { randomUUID } from 'node:crypto';
 
 export interface ITokenPayload {
   userId: string;
   email: string;
+  role: UserRole;
   familyId?: string;
   jti?: string;
   [key: string]: unknown;

@@ -1,5 +1,5 @@
 import type { IUser } from '@src/modules/user/user.types.js';
-import { VALIDATIONS } from '@src/shared/utils/constants.js';
+import { USER_ROLES, VALIDATIONS } from '@src/shared/utils/constants.js';
 import mongoose, { Document, Model } from 'mongoose';
 
 interface IUserDocuments extends IUser, Document {}
@@ -61,6 +61,11 @@ const userSchema = new mongoose.Schema<IUserDocuments>(
       type: String,
       unique: true,
       sparse: true,
+    },
+    role: {
+      type: String,
+      enum: Object.values(USER_ROLES),
+      default: USER_ROLES.USER,
     },
   },
   {

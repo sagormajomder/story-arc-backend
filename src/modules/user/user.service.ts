@@ -3,6 +3,7 @@ import {
   type IUserRepository,
 } from '@src/modules/user/user.repository.js';
 import type {
+  ICreateGoogleUserInput,
   IUser,
   IUserPlainDBResponse,
   UserResponseDto,
@@ -11,6 +12,7 @@ import {
   argon2PasswordHasher,
   type IPasswordHasher,
 } from '@src/shared/services/hasher.service.js';
+import { USER_ROLES } from '@src/shared/utils/constants.js';
 import { excludeFields } from '@src/shared/utils/excludeFields.js';
 
 export interface IUserService {
@@ -24,12 +26,9 @@ export interface IUserService {
     includePassword?: boolean,
   ): Promise<IUserPlainDBResponse | null>;
   findByGoogleId(googleId: string): Promise<IUserPlainDBResponse | null>;
-  createGoogleUser(data: {
-    fullName: string;
-    email: string;
-    profileImage: string;
-    googleId: string;
-  }): Promise<IUserPlainDBResponse>;
+  createGoogleUser(
+    data: ICreateGoogleUserInput,
+  ): Promise<IUserPlainDBResponse>;
   linkGoogleAccount(
     userId: string,
     googleId: string,
@@ -54,6 +53,7 @@ export class UserService implements IUserService {
     const hashedPassword = await this.passwordHasher.hash(userData.password!);
     const user = await this.repo.create({
       ...userData,
+      role: userData.role ?? USER_ROLES.USER,
       password: hashedPassword,
     });
 
@@ -85,13 +85,13 @@ export class UserService implements IUserService {
     return this.repo.findByGoogleId(googleId);
   }
 
-  async createGoogleUser(data: {
-    fullName: string;
-    email: string;
-    profileImage: string;
-    googleId: string;
-  }): Promise<IUserPlainDBResponse> {
-    return this.repo.createGoogleUser(data);
+  async createGoogleUser(
+    data: ICreateGoogleUserInput,
+  ): Promise<IUserPlainDBResponse> {
+    return this.repo.createGoogleUser({
+      ...data,
+      role: data.role ?? USER_ROLES.USER,
+    });
   }
 
   async linkGoogleAccount(

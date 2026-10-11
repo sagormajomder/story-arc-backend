@@ -3,6 +3,7 @@ export {
   type IUserService,
 } from '@src/modules/user/user.service.js';
 export type {
+  ICreateGoogleUserInput,
   IUser,
   IUserPlainDBResponse,
   UserResponseDto,
