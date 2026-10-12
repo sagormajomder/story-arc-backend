@@ -138,7 +138,6 @@ export const loginUserCntlr = asyncCatch(
       message: 'User logged in successfully',
       data: {
         user,
-        accessToken,
       },
     });
   },
@@ -180,7 +179,6 @@ export const googleLoginCntlr = asyncCatch(
       message: 'Logged in successfully with Google',
       data: {
         user,
-        accessToken,
       },
     });
   },
@@ -224,9 +222,7 @@ export const refreshTokenCntlr = asyncCatch(
         statusCode: HTTP_STATUS.OK,
         success: true,
         message: 'Tokens refreshed successfully',
-        data: {
-          accessToken,
-        },
+        data: null,
       });
     } catch (error) {
       res.clearCookie(
@@ -298,4 +294,3 @@ export const resetPasswordCntlr = asyncCatch(
     });
   },
 );
-
