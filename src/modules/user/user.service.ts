@@ -4,16 +4,26 @@ import {
 } from '@src/modules/user/user.repository.js';
 import type {
   ICreateGoogleUserInput,
+  IGetUsersResult,
   IUser,
   IUserPlainDBResponse,
   UserResponseDto,
 } from '@src/modules/user/user.types.js';
+import type {
+  GetUsersQueryDto,
+  UpdateProfileDto,
+} from '@src/modules/user/user.validate.js';
+import { AppError } from '@src/shared/errors/appError.js';
 import {
   argon2PasswordHasher,
   type IPasswordHasher,
 } from '@src/shared/services/hasher.service.js';
-import { USER_ROLES } from '@src/shared/utils/constants.js';
-import { excludeFields } from '@src/shared/utils/excludeFields.js';
+import {
+  HTTP_STATUS,
+  USER_ROLES,
+  type UserRole,
+} from '@src/shared/utils/constants.js';
+import { toUserResponseDto } from '@src/modules/user/user.mapper.js';
 
 export interface IUserService {
   createUser(userData: IUser): Promise<{ user: UserResponseDto }>;
@@ -41,6 +51,13 @@ export interface IUserService {
   ): Promise<IUserPlainDBResponse>;
   updatePassword(userId: string, newPassword: string): Promise<void>;
   markEmailAsVerified(userId: string): Promise<void>;
+  getAllUsers(query: GetUsersQueryDto): Promise<IGetUsersResult>;
+  getProfile(userId: string): Promise<UserResponseDto>;
+  updateProfile(
+    userId: string,
+    data: UpdateProfileDto,
+  ): Promise<UserResponseDto>;
+  updateUserRole(userId: string, role: UserRole): Promise<UserResponseDto>;
 }
 
 export class UserService implements IUserService {
@@ -58,12 +75,7 @@ export class UserService implements IUserService {
     });
 
     return {
-      user: excludeFields(user, [
-        'password',
-        'authProviders',
-        'isEmailVerified',
-        'googleId',
-      ]),
+      user: toUserResponseDto(user),
     };
   }
 
@@ -117,6 +129,61 @@ export class UserService implements IUserService {
 
   async markEmailAsVerified(userId: string): Promise<void> {
     await this.repo.markEmailAsVerified(userId);
+  }
+
+  async getAllUsers(query: GetUsersQueryDto): Promise<IGetUsersResult> {
+    const { users, total, stats } = await this.repo.findAll({
+      page: query.page,
+      limit: query.limit,
+      search: query.search,
+      role: query.role,
+    });
+
+    const sanitizedUsers = users.map(toUserResponseDto);
+
+    const totalPages = Math.ceil(total / query.limit) || 1;
+
+    return {
+      users: sanitizedUsers,
+      total,
+      totalPages,
+      page: query.page,
+      limit: query.limit,
+      stats,
+    };
+  }
+
+  async getProfile(userId: string): Promise<UserResponseDto> {
+    const user = await this.repo.findById(userId);
+    if (!user) {
+      throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    return toUserResponseDto(user);
+  }
+
+  async updateProfile(
+    userId: string,
+    data: UpdateProfileDto,
+  ): Promise<UserResponseDto> {
+    const updatedUser = await this.repo.updateProfile(userId, data);
+    if (!updatedUser) {
+      throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    return toUserResponseDto(updatedUser);
+  }
+
+  async updateUserRole(
+    userId: string,
+    role: UserRole,
+  ): Promise<UserResponseDto> {
+    const updatedUser = await this.repo.updateRole(userId, role);
+    if (!updatedUser) {
+      throw new AppError('User not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    return toUserResponseDto(updatedUser);
   }
 }
 

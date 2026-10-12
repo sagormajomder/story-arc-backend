@@ -6,7 +6,16 @@ export const VALIDATIONS = {
   EMAIL_REGEX_PATTERN:
     /^(?!\.)(?!.*\.\.)([a-z0-9_'+\-.]*)[a-z0-9_+-]@([a-z0-9][a-z0-9.-]*\.)+[a-z]{2,}$/i,
   DEFAULT_PROFILE_IMAGE: 'https://i.ibb.co.com/fzYGmQj8/avatar-placeholder.gif',
+  OBJECT_ID_REGEX_PATTERN: /^[0-9a-fA-F]{24}$/,
 };
+
+export const PAGINATION = {
+  DEFAULT_PAGE: 1,
+  DEFAULT_LIMIT: 10,
+  MIN_PAGE: 1,
+  MIN_LIMIT: 1,
+  MAX_LIMIT: 100,
+} as const;
 
 export const USER_ROLES = {
   USER: 'user',

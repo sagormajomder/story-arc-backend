@@ -1,10 +1,17 @@
 import { User } from '@src/modules/user/user.model.js';
 import type {
   ICreateGoogleUserInput,
+  IFindAllUsersOptions,
+  IUpdateProfileInput,
   IUser,
   IUserPlainDBResponse,
+  IUsersStats,
 } from '@src/modules/user/user.types.js';
-import { USER_ROLES, VALIDATIONS } from '@src/shared/utils/constants.js';
+import {
+  USER_ROLES,
+  type UserRole,
+  VALIDATIONS,
+} from '@src/shared/utils/constants.js';
 
 export interface IUserRepository {
   create(userData: IUser): Promise<IUserPlainDBResponse>;
@@ -30,6 +37,19 @@ export interface IUserRepository {
   ): Promise<IUserPlainDBResponse>;
   updatePassword(userId: string, hashedPassword: string): Promise<void>;
   markEmailAsVerified(userId: string): Promise<void>;
+  findAll(options: IFindAllUsersOptions): Promise<{
+    users: IUserPlainDBResponse[];
+    total: number;
+    stats: IUsersStats;
+  }>;
+  updateRole(
+    userId: string,
+    role: UserRole,
+  ): Promise<IUserPlainDBResponse | null>;
+  updateProfile(
+    userId: string,
+    data: IUpdateProfileInput,
+  ): Promise<IUserPlainDBResponse | null>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -153,6 +173,99 @@ export class UserRepository implements IUserRepository {
       { _id: userId },
       { $set: { isEmailVerified: true } },
     );
+  }
+
+  async findAll(options: IFindAllUsersOptions): Promise<{
+    users: IUserPlainDBResponse[];
+    total: number;
+    stats: IUsersStats;
+  }> {
+    const filter: Record<string, unknown> = {};
+
+    if (options.role) {
+      filter.role = options.role;
+    }
+
+    if (options.search) {
+      filter.$or = [
+        { fullName: { $regex: options.search, $options: 'i' } },
+        { email: { $regex: options.search, $options: 'i' } },
+      ];
+    }
+
+    const skip = (options.page - 1) * options.limit;
+
+    const [userDocs, total, totalUsers, adminRoles] = await Promise.all([
+      this.model
+        .find(filter)
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(options.limit)
+        .exec(),
+      this.model.countDocuments(filter).exec(),
+      this.model.countDocuments().exec(),
+      this.model.countDocuments({ role: USER_ROLES.ADMIN }).exec(),
+    ]);
+
+    const users = userDocs.map(
+      doc => doc.toObject() as unknown as IUserPlainDBResponse,
+    );
+
+    return {
+      users,
+      total,
+      stats: {
+        totalUsers,
+        activeUsers: totalUsers,
+        adminRoles,
+      },
+    };
+  }
+
+  async updateRole(
+    userId: string,
+    role: UserRole,
+  ): Promise<IUserPlainDBResponse | null> {
+    const userDoc = await this.model
+      .findByIdAndUpdate(
+        userId,
+        { $set: { role } },
+        { new: true, runValidators: true },
+      )
+      .exec();
+
+    if (!userDoc) {
+      return null;
+    }
+
+    return userDoc.toObject() as unknown as IUserPlainDBResponse;
+  }
+
+  async updateProfile(
+    userId: string,
+    data: IUpdateProfileInput,
+  ): Promise<IUserPlainDBResponse | null> {
+    const updateData: Record<string, unknown> = {};
+    if (data.fullName !== undefined) {
+      updateData.fullName = data.fullName;
+    }
+    if (data.profileImage !== undefined) {
+      updateData.profileImage = data.profileImage;
+    }
+
+    const userDoc = await this.model
+      .findByIdAndUpdate(
+        userId,
+        { $set: updateData },
+        { new: true, runValidators: true },
+      )
+      .exec();
+
+    if (!userDoc) {
+      return null;
+    }
+
+    return userDoc.toObject() as unknown as IUserPlainDBResponse;
   }
 }
 

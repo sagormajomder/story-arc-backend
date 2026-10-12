@@ -1,6 +1,6 @@
 export const excludeFields = <T, Key extends keyof T>(
   obj: T,
-  keys: Key[]
+  keys: readonly Key[],
 ): Omit<T, Key> => {
   const newObj = { ...obj };
   keys.forEach((key) => {

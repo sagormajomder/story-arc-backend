@@ -28,6 +28,7 @@ import {
   type IRefreshTokenRepository,
 } from '@src/modules/auth/refresh-token.repository.js';
 import {
+  toUserResponseDto,
   userService,
   type IUserService,
 } from '@src/modules/user/user.index.js';
@@ -49,7 +50,6 @@ import {
   VALIDATIONS,
   type UserRole,
 } from '@src/shared/utils/constants.js';
-import { excludeFields } from '@src/shared/utils/excludeFields.js';
 import { logger } from '@src/shared/utils/logger.js';
 import { OAuth2Client } from 'google-auth-library';
 import { randomBytes, randomUUID } from 'node:crypto';
@@ -363,12 +363,7 @@ export class AuthService implements IAuthService {
     );
 
     return {
-      user: excludeFields(existingUser, [
-        'password',
-        'authProviders',
-        'isEmailVerified',
-        'googleId',
-      ]),
+      user: toUserResponseDto(existingUser),
       accessToken,
       refreshToken,
     };
@@ -405,12 +400,7 @@ export class AuthService implements IAuthService {
       );
 
       return {
-        user: excludeFields(user, [
-          'password',
-          'authProviders',
-          'isEmailVerified',
-          'googleId',
-        ]),
+        user: toUserResponseDto(user),
         accessToken,
         refreshToken,
       };
@@ -490,12 +480,7 @@ export class AuthService implements IAuthService {
     );
 
     return {
-      user: excludeFields(user, [
-        'password',
-        'authProviders',
-        'isEmailVerified',
-        'googleId',
-      ]),
+      user: toUserResponseDto(user),
       accessToken,
       refreshToken,
     };
