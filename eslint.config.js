@@ -38,6 +38,10 @@ const elements = [
     type: 'config',
     pattern: 'src/config/**',
   },
+  {
+    type: 'scripts',
+    pattern: 'src/scripts/**',
+  },
 ];
 
 /**
@@ -48,6 +52,8 @@ const elements = [
  * - Feature modules can consume shared utilities and configuration.
  * - Shared and Config layers cannot depend on feature modules (prevents upward leaks).
  * - Config layer is self-contained with zero dependencies on internal layers.
+ * - Scripts layer can consume shared, config, and feature modules via public entry points (*.index.ts).
+ * - Application layers (modules, shared, config) cannot import from scripts.
  */
 const policies = [
   // 1. Inter-module communication: Only allowed via module entrypoints (*.index.ts)
@@ -81,6 +87,39 @@ const policies = [
     from: { element: { type: 'shared' } },
     allow: {
       to: { element: { type: 'config' } },
+    },
+  },
+
+  // 5. Scripts layer can access shared utils and configuration
+  {
+    from: { element: { type: 'scripts' } },
+    allow: {
+      to: { element: { type: ['shared', 'config'] } },
+    },
+  },
+
+  // 6. Scripts layer can consume feature modules ONLY via public entry points (*.index.ts)
+  {
+    from: { element: { type: 'scripts' } },
+    allow: {
+      to: {
+        element: {
+          type: Object.keys(dependencyMap),
+          fileInternalPath: '*.index.ts',
+        },
+      },
+    },
+  },
+
+  // 7. Prevent application layers from importing from scripts
+  {
+    from: {
+      element: {
+        type: ['shared', 'config', ...Object.keys(dependencyMap)],
+      },
+    },
+    disallow: {
+      to: { element: { type: 'scripts' } },
     },
   },
 ];

@@ -30,6 +30,9 @@ const DEFAULT_EMAIL_FROM_ADDRESS = 'noreply@storyarc.com';
 const DEFAULT_EMAIL_VERIFICATION_EXPIRES_HOURS = 24;
 const DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_WINDOW_MINUTES = 60;
 const DEFAULT_RESEND_VERIFICATION_EMAIL_RATE_LIMIT_MAX = 3;
+const DEFAULT_SUPER_ADMIN_EMAIL = 'admin@storyarc.com';
+const DEFAULT_SUPER_ADMIN_PASSWORD = 'Admin@123456';
+const DEFAULT_SUPER_ADMIN_NAME = 'Super Admin';
 
 // utility fn
 const emptyStringToUndefined = (val: unknown) => {
@@ -303,6 +306,25 @@ const envSchema = z.object({
   GOOGLE_CLIENT_ID: z.preprocess(
     emptyStringToUndefined,
     z.string({ error: 'GOOGLE_CLIENT_ID must be a string' }).optional(),
+  ),
+  SUPER_ADMIN_NAME: z.preprocess(
+    emptyStringToUndefined,
+    z.string().default(DEFAULT_SUPER_ADMIN_NAME),
+  ),
+  SUPER_ADMIN_EMAIL: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .email({ error: 'SUPER_ADMIN_EMAIL must be a valid email' })
+      .default(DEFAULT_SUPER_ADMIN_EMAIL),
+  ),
+  SUPER_ADMIN_PASSWORD: z.preprocess(
+    emptyStringToUndefined,
+    z
+      .string({ error: 'SUPER_ADMIN_PASSWORD must be a string' })
+      .min(8, {
+        error: 'SUPER_ADMIN_PASSWORD must be at least 8 characters long',
+      })
+      .default(DEFAULT_SUPER_ADMIN_PASSWORD),
   ),
 });
 
