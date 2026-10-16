@@ -15,6 +15,7 @@ import tseslint from 'typescript-eslint';
 const dependencyMap = {
   auth: ['user'], // 'auth' module can depend on 'user'
   user: [], // 'user' module has no module dependencies
+  book: [], // 'book' module has no module dependencies
 };
 
 /**

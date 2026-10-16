@@ -15,7 +15,6 @@ export interface IUser {
 
 export interface IUserPlainDBResponse extends IUser {
   id: string;
-  role: UserRole;
   createdAt: Date;
   updatedAt: Date;
 }

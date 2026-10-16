@@ -59,3 +59,25 @@ export const TIME_MS = {
   HOUR: 60 * 60 * 1000,
   DAY: 24 * 60 * 60 * 1000,
 } as const;
+
+export const BOOK_VALIDATIONS = {
+  TITLE_MIN_LENGTH: 1,
+  TITLE_MAX_LENGTH: 200,
+  AUTHOR_MIN_LENGTH: 1,
+  AUTHOR_MAX_LENGTH: 100,
+  DESCRIPTION_MAX_LENGTH: 5000,
+  MIN_RATING: 0,
+  MAX_RATING: 5,
+} as const;
+
+export const BOOK_SORT_OPTIONS = {
+  NEWEST: 'newest',
+  RATING_DESC: 'rating_desc',
+  SHELVED_DESC: 'shelved_desc',
+  TITLE_ASC: 'title_asc',
+  TITLE_DESC: 'title_desc',
+} as const;
+
+export type BookSortOption =
+  (typeof BOOK_SORT_OPTIONS)[keyof typeof BOOK_SORT_OPTIONS];
+
