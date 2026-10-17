@@ -3,6 +3,7 @@ import type {
   IBookPlainDBResponse,
   ICreateBookInput,
   IFindAllBooksOptions,
+  IGenreDistribution,
   IUpdateBookInput,
 } from '@src/modules/book/book.types.js';
 import { BOOK_SORT_OPTIONS } from '@src/shared/utils/constants.js';
@@ -28,6 +29,8 @@ export interface IBookRepository {
     rating: number,
     totalRatings: number,
   ): Promise<IBookPlainDBResponse | null>;
+  countBooks(): Promise<number>;
+  getGenreDistribution(): Promise<IGenreDistribution[]>;
 }
 
 export class BookRepository implements IBookRepository {
@@ -244,6 +247,47 @@ export class BookRepository implements IBookRepository {
     }
 
     return bookDoc.toObject() as unknown as IBookPlainDBResponse;
+  }
+
+  async countBooks(): Promise<number> {
+    return this.model.countDocuments().exec();
+  }
+
+  async getGenreDistribution(): Promise<IGenreDistribution[]> {
+    const results = await this.model
+      .aggregate<IGenreDistribution>([
+        {
+          $group: {
+            _id: {
+              $cond: [
+                {
+                  $or: [
+                    { $eq: ['$genre', null] },
+                    { $eq: ['$genre', ''] },
+                    { $not: ['$genre'] },
+                  ],
+                },
+                'Uncategorized',
+                '$genre',
+              ],
+            },
+            count: { $sum: 1 },
+          },
+        },
+        {
+          $project: {
+            name: '$_id',
+            value: '$count',
+            _id: 0,
+          },
+        },
+        {
+          $sort: { value: -1 },
+        },
+      ])
+      .exec();
+
+    return results;
   }
 }
 

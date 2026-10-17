@@ -7,6 +7,7 @@ import type {
   BookResponseDto,
   ICreateBookInput,
   IGetBooksResult,
+  IGenreDistribution,
   IUpdateBookInput,
 } from '@src/modules/book/book.types.js';
 import type { GetBooksQueryDto } from '@src/modules/book/book.validate.js';
@@ -28,6 +29,8 @@ export interface IBookService {
     rating: number,
     totalRatings: number,
   ): Promise<BookResponseDto>;
+  countBooks(): Promise<number>;
+  getGenreDistribution(): Promise<IGenreDistribution[]>;
 }
 
 export class BookService implements IBookService {
@@ -125,6 +128,14 @@ export class BookService implements IBookService {
       throw new AppError('Book not found', HTTP_STATUS.NOT_FOUND);
     }
     return toBookResponseDto(updatedBook);
+  }
+
+  async countBooks(): Promise<number> {
+    return this.repo.countBooks();
+  }
+
+  async getGenreDistribution(): Promise<IGenreDistribution[]> {
+    return this.repo.getGenreDistribution();
   }
 }
 

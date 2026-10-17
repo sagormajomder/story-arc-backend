@@ -1,7 +1,7 @@
 import {
   bookService as defaultBookService,
   type IBookService,
-} from '@src/modules/book/book.service.js';
+} from '@src/modules/book/book.index.js';
 import {
   toGenreResponseDto,
   toGenreWithCountDto,

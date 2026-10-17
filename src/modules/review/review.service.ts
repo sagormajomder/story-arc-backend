@@ -1,7 +1,7 @@
 import {
   bookService as defaultBookService,
   type IBookService,
-} from '@src/modules/book/book.service.js';
+} from '@src/modules/book/book.index.js';
 import {
   toAdminReviewResponseDto,
   toReviewResponseDto,
@@ -23,7 +23,7 @@ import type {
 import {
   userService as defaultUserService,
   type IUserService,
-} from '@src/modules/user/user.service.js';
+} from '@src/modules/user/user.index.js';
 import { AppError } from '@src/shared/errors/appError.js';
 import {
   HTTP_STATUS,
@@ -49,6 +49,7 @@ export interface IReviewService {
     data: UpdateMyReviewDto,
   ): Promise<ReviewResponseDto>;
   deleteReview(reviewId: string): Promise<void>;
+  countReviews(status?: ReviewStatus): Promise<number>;
 }
 
 export class ReviewService implements IReviewService {
@@ -220,6 +221,10 @@ export class ReviewService implements IReviewService {
     if (deletedReview.status === REVIEW_STATUS.APPROVED) {
       await this.recalculateBookRating(deletedReview.bookId);
     }
+  }
+
+  async countReviews(status?: ReviewStatus): Promise<number> {
+    return this.repo.countReviews(status);
   }
 }
 

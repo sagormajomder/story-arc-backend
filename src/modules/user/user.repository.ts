@@ -50,6 +50,7 @@ export interface IUserRepository {
     userId: string,
     data: IUpdateProfileInput,
   ): Promise<IUserPlainDBResponse | null>;
+  countUsers(role?: UserRole): Promise<number>;
 }
 
 export class UserRepository implements IUserRepository {
@@ -266,6 +267,14 @@ export class UserRepository implements IUserRepository {
     }
 
     return userDoc.toObject() as unknown as IUserPlainDBResponse;
+  }
+
+  async countUsers(role?: UserRole): Promise<number> {
+    const filter: Record<string, unknown> = {};
+    if (role) {
+      filter.role = role;
+    }
+    return this.model.countDocuments(filter).exec();
   }
 }
 

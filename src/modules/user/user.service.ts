@@ -58,6 +58,7 @@ export interface IUserService {
     data: UpdateProfileDto,
   ): Promise<UserResponseDto>;
   updateUserRole(userId: string, role: UserRole): Promise<UserResponseDto>;
+  countUsers(role?: UserRole): Promise<number>;
 }
 
 export class UserService implements IUserService {
@@ -184,6 +185,10 @@ export class UserService implements IUserService {
     }
 
     return toUserResponseDto(updatedUser);
+  }
+
+  async countUsers(role?: UserRole): Promise<number> {
+    return this.repo.countUsers(role);
   }
 }
 

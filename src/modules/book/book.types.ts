@@ -70,3 +70,9 @@ export interface IGetBooksResult {
   limit: number;
 }
 
+export interface IGenreDistribution {
+  name: string;
+  value: number;
+}
+
+

@@ -12,6 +12,7 @@ export type {
   IBookPlainDBResponse,
   ICreateBookInput,
   IFindAllBooksOptions,
+  IGenreDistribution,
   IGetBooksResult,
   IUpdateBookInput,
 } from '@src/modules/book/book.types.js';

@@ -25,6 +25,7 @@ export interface IReviewRepository {
   ): Promise<IReviewPlainDBResponse | null>;
   delete(reviewId: string): Promise<IReviewPlainDBResponse | null>;
   existsByBookAndUser(bookId: string, userId: string): Promise<boolean>;
+  countReviews(status?: ReviewStatus): Promise<number>;
 }
 
 export class ReviewRepository implements IReviewRepository {
@@ -129,6 +130,14 @@ export class ReviewRepository implements IReviewRepository {
   async existsByBookAndUser(bookId: string, userId: string): Promise<boolean> {
     const count = await this.model.countDocuments({ bookId, userId }).exec();
     return count > 0;
+  }
+
+  async countReviews(status?: ReviewStatus): Promise<number> {
+    const filter: Record<string, unknown> = {};
+    if (status) {
+      filter.status = status;
+    }
+    return this.model.countDocuments(filter).exec();
   }
 }
 
