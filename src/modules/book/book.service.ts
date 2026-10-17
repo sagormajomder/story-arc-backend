@@ -23,6 +23,11 @@ export interface IBookService {
   countBooksByGenres(genres: string[]): Promise<Record<string, number>>;
   renameGenreInBooks(oldName: string, newName: string): Promise<number>;
   clearGenreFromBooks(genreName: string): Promise<number>;
+  updateBookRating(
+    bookId: string,
+    rating: number,
+    totalRatings: number,
+  ): Promise<BookResponseDto>;
 }
 
 export class BookService implements IBookService {
@@ -108,6 +113,18 @@ export class BookService implements IBookService {
 
   async clearGenreFromBooks(genreName: string): Promise<number> {
     return this.repo.clearGenre(genreName);
+  }
+
+  async updateBookRating(
+    bookId: string,
+    rating: number,
+    totalRatings: number,
+  ): Promise<BookResponseDto> {
+    const updatedBook = await this.repo.updateRating(bookId, rating, totalRatings);
+    if (!updatedBook) {
+      throw new AppError('Book not found', HTTP_STATUS.NOT_FOUND);
+    }
+    return toBookResponseDto(updatedBook);
   }
 }
 

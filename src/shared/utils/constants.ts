@@ -86,3 +86,18 @@ export const GENRE_VALIDATIONS = {
   NAME_MAX_LENGTH: 50,
 } as const;
 
+export const REVIEW_VALIDATIONS = {
+  COMMENT_MIN_LENGTH: 10,
+  COMMENT_MAX_LENGTH: 2000,
+  MIN_RATING: 1,
+  MAX_RATING: 5,
+} as const;
+
+export const REVIEW_STATUS = {
+  PENDING: 'pending',
+  APPROVED: 'approved',
+} as const;
+
+export type ReviewStatus = (typeof REVIEW_STATUS)[keyof typeof REVIEW_STATUS];
+
+

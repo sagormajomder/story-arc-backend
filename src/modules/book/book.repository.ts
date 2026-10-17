@@ -23,6 +23,11 @@ export interface IBookRepository {
   countBooksByGenres(genres: string[]): Promise<Record<string, number>>;
   renameGenre(oldName: string, newName: string): Promise<number>;
   clearGenre(genreName: string): Promise<number>;
+  updateRating(
+    bookId: string,
+    rating: number,
+    totalRatings: number,
+  ): Promise<IBookPlainDBResponse | null>;
 }
 
 export class BookRepository implements IBookRepository {
@@ -219,6 +224,26 @@ export class BookRepository implements IBookRepository {
       .updateMany({ genre: genreName }, { $set: { genre: '' } })
       .exec();
     return result.modifiedCount;
+  }
+
+  async updateRating(
+    bookId: string,
+    rating: number,
+    totalRatings: number,
+  ): Promise<IBookPlainDBResponse | null> {
+    const bookDoc = await this.model
+      .findByIdAndUpdate(
+        bookId,
+        { $set: { rating, totalRatings } },
+        { returnDocument: 'after', runValidators: true },
+      )
+      .exec();
+
+    if (!bookDoc) {
+      return null;
+    }
+
+    return bookDoc.toObject() as unknown as IBookPlainDBResponse;
   }
 }
 
