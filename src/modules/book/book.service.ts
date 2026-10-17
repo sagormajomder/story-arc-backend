@@ -20,6 +20,9 @@ export interface IBookService {
   updateBook(bookId: string, data: IUpdateBookInput): Promise<BookResponseDto>;
   deleteBook(bookId: string): Promise<void>;
   getDistinctGenres(): Promise<string[]>;
+  countBooksByGenres(genres: string[]): Promise<Record<string, number>>;
+  renameGenreInBooks(oldName: string, newName: string): Promise<number>;
+  clearGenreFromBooks(genreName: string): Promise<number>;
 }
 
 export class BookService implements IBookService {
@@ -88,6 +91,23 @@ export class BookService implements IBookService {
 
   async getDistinctGenres(): Promise<string[]> {
     return this.repo.getDistinctGenres();
+  }
+
+  async countBooksByGenres(
+    genres: string[],
+  ): Promise<Record<string, number>> {
+    return this.repo.countBooksByGenres(genres);
+  }
+
+  async renameGenreInBooks(
+    oldName: string,
+    newName: string,
+  ): Promise<number> {
+    return this.repo.renameGenre(oldName, newName);
+  }
+
+  async clearGenreFromBooks(genreName: string): Promise<number> {
+    return this.repo.clearGenre(genreName);
   }
 }
 

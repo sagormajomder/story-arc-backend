@@ -20,6 +20,9 @@ export interface IBookRepository {
   ): Promise<IBookPlainDBResponse | null>;
   delete(bookId: string): Promise<boolean>;
   getDistinctGenres(): Promise<string[]>;
+  countBooksByGenres(genres: string[]): Promise<Record<string, number>>;
+  renameGenre(oldName: string, newName: string): Promise<number>;
+  clearGenre(genreName: string): Promise<number>;
 }
 
 export class BookRepository implements IBookRepository {
@@ -179,6 +182,43 @@ export class BookRepository implements IBookRepository {
     }
 
     return genreStrings;
+  }
+
+  async countBooksByGenres(genres: string[]): Promise<Record<string, number>> {
+    if (genres.length === 0) {
+      return {};
+    }
+
+    const counts = await this.model
+      .aggregate<{ _id: string; count: number }>([
+        { $match: { genre: { $in: genres } } },
+        { $group: { _id: '$genre', count: { $sum: 1 } } },
+      ])
+      .exec();
+
+    const result: Record<string, number> = {};
+    for (const genre of genres) {
+      result[genre] = 0;
+    }
+    for (const item of counts) {
+      result[item._id] = item.count;
+    }
+
+    return result;
+  }
+
+  async renameGenre(oldName: string, newName: string): Promise<number> {
+    const result = await this.model
+      .updateMany({ genre: oldName }, { $set: { genre: newName } })
+      .exec();
+    return result.modifiedCount;
+  }
+
+  async clearGenre(genreName: string): Promise<number> {
+    const result = await this.model
+      .updateMany({ genre: genreName }, { $set: { genre: '' } })
+      .exec();
+    return result.modifiedCount;
   }
 }
 

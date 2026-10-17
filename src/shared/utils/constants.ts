@@ -81,3 +81,8 @@ export const BOOK_SORT_OPTIONS = {
 export type BookSortOption =
   (typeof BOOK_SORT_OPTIONS)[keyof typeof BOOK_SORT_OPTIONS];
 
+export const GENRE_VALIDATIONS = {
+  NAME_MIN_LENGTH: 1,
+  NAME_MAX_LENGTH: 50,
+} as const;
+
