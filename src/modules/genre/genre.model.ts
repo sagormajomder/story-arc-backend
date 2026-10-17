@@ -9,7 +9,6 @@ const genreSchema = new mongoose.Schema<IGenreDocument>(
     name: {
       type: String,
       required: [true, 'Genre name is required'],
-      unique: true,
       trim: true,
       minLength: [
         GENRE_VALIDATIONS.NAME_MIN_LENGTH,
@@ -41,4 +40,3 @@ genreSchema.index({ name: 1 });
 
 export const Genre: Model<IGenreDocument> =
   mongoose.models.Genre || mongoose.model<IGenreDocument>('Genre', genreSchema);
-

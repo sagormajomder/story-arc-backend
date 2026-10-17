@@ -101,4 +101,10 @@ export const REVIEW_STATUS = {
 
 export type ReviewStatus = (typeof REVIEW_STATUS)[keyof typeof REVIEW_STATUS];
 
-
+export const TUTORIAL_VALIDATIONS = {
+  TITLE_MIN_LENGTH: 3,
+  TITLE_MAX_LENGTH: 200,
+  CATEGORY_MIN_LENGTH: 2,
+  CATEGORY_MAX_LENGTH: 50,
+  YOUTUBE_REGEX: /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/,
+} as const;
