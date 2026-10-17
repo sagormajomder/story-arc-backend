@@ -12,24 +12,42 @@ import {
 } from '@src/modules/review/review.repository.js';
 import type {
   ICreateReviewInput,
-  IGetAdminReviewsResult,
+  IGetReviewsResult,
+  IUpdateReviewInput,
   ReviewResponseDto,
 } from '@src/modules/review/review.types.js';
-import type { GetAdminReviewsQueryDto } from '@src/modules/review/review.validate.js';
+import type {
+  GetAdminReviewsQueryDto,
+  UpdateMyReviewDto,
+} from '@src/modules/review/review.validate.js';
 import {
   userService as defaultUserService,
   type IUserService,
 } from '@src/modules/user/user.service.js';
 import { AppError } from '@src/shared/errors/appError.js';
-import { HTTP_STATUS, REVIEW_STATUS } from '@src/shared/utils/constants.js';
+import {
+  HTTP_STATUS,
+  REVIEW_STATUS,
+  type ReviewStatus,
+} from '@src/shared/utils/constants.js';
 
 export interface IReviewService {
   submitReview(input: ICreateReviewInput): Promise<ReviewResponseDto>;
   getBookReviews(bookId: string): Promise<ReviewResponseDto[]>;
+  getMyReviews(userId: string): Promise<ReviewResponseDto[]>;
   getAdminReviews(
     query: GetAdminReviewsQueryDto,
-  ): Promise<IGetAdminReviewsResult>;
-  approveReview(reviewId: string): Promise<void>;
+  ): Promise<IGetReviewsResult>;
+  updateReviewStatus(
+    reviewId: string,
+    status: ReviewStatus,
+    rejectionReason?: string,
+  ): Promise<ReviewResponseDto>;
+  updateMyReview(
+    reviewId: string,
+    userId: string,
+    data: UpdateMyReviewDto,
+  ): Promise<ReviewResponseDto>;
   deleteReview(reviewId: string): Promise<void>;
 }
 
@@ -41,7 +59,10 @@ export class ReviewService implements IReviewService {
   ) {}
 
   private async recalculateBookRating(bookId: string): Promise<void> {
-    const approvedReviews = await this.repo.findApprovedByBookId(bookId);
+    const approvedReviews = await this.repo.findByBookId(
+      bookId,
+      REVIEW_STATUS.APPROVED,
+    );
     const totalRatings = approvedReviews.length;
     const sumRatings = approvedReviews.reduce((sum, r) => sum + r.rating, 0);
     const averageRating =
@@ -69,7 +90,7 @@ export class ReviewService implements IReviewService {
       );
     }
 
-    // 4. Create review with denormalized fields
+    // 4. Create review with denormalized fields and initial pending status
     const createdReview = await this.repo.create({
       bookId: input.bookId,
       userId: input.userId,
@@ -81,6 +102,7 @@ export class ReviewService implements IReviewService {
       bookCover: book.cover || '',
       rating: input.rating,
       comment: input.comment,
+      status: REVIEW_STATUS.PENDING,
     });
 
     return toReviewResponseDto(createdReview);
@@ -89,13 +111,21 @@ export class ReviewService implements IReviewService {
   async getBookReviews(bookId: string): Promise<ReviewResponseDto[]> {
     // Verify book exists
     await this.bookService.getBookById(bookId);
-    const reviews = await this.repo.findByBookId(bookId);
+    const reviews = await this.repo.findByBookId(
+      bookId,
+      REVIEW_STATUS.APPROVED,
+    );
+    return reviews.map(toReviewResponseDto);
+  }
+
+  async getMyReviews(userId: string): Promise<ReviewResponseDto[]> {
+    const reviews = await this.repo.findByUserId(userId);
     return reviews.map(toReviewResponseDto);
   }
 
   async getAdminReviews(
     query: GetAdminReviewsQueryDto,
-  ): Promise<IGetAdminReviewsResult> {
+  ): Promise<IGetReviewsResult> {
     const { reviews, total } = await this.repo.findAll({
       page: query.page,
       limit: query.limit,
@@ -113,16 +143,72 @@ export class ReviewService implements IReviewService {
     };
   }
 
-  async approveReview(reviewId: string): Promise<void> {
-    const updatedReview = await this.repo.updateStatus(
-      reviewId,
-      REVIEW_STATUS.APPROVED,
-    );
+  async updateReviewStatus(
+    reviewId: string,
+    status: ReviewStatus,
+    rejectionReason?: string,
+  ): Promise<ReviewResponseDto> {
+    const existing = await this.repo.findById(reviewId);
+    if (!existing) {
+      throw new AppError('Review not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    const previousStatus = existing.status;
+    const updateData: IUpdateReviewInput = {
+      status,
+      rejectionReason:
+        status === REVIEW_STATUS.REJECTED ? rejectionReason || '' : '',
+    };
+
+    const updatedReview = await this.repo.update(reviewId, updateData);
     if (!updatedReview) {
       throw new AppError('Review not found', HTTP_STATUS.NOT_FOUND);
     }
 
-    await this.recalculateBookRating(updatedReview.bookId);
+    if (
+      status === REVIEW_STATUS.APPROVED ||
+      previousStatus === REVIEW_STATUS.APPROVED
+    ) {
+      await this.recalculateBookRating(updatedReview.bookId);
+    }
+
+    return toReviewResponseDto(updatedReview);
+  }
+
+  async updateMyReview(
+    reviewId: string,
+    userId: string,
+    data: UpdateMyReviewDto,
+  ): Promise<ReviewResponseDto> {
+    const existing = await this.repo.findById(reviewId);
+    if (!existing) {
+      throw new AppError('Review not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (existing.userId !== userId) {
+      throw new AppError(
+        'You are not authorized to update this review',
+        HTTP_STATUS.FORBIDDEN,
+      );
+    }
+
+    const previousStatus = existing.status;
+    const updateData: IUpdateReviewInput = {
+      ...data,
+      status: REVIEW_STATUS.PENDING,
+      rejectionReason: '',
+    };
+
+    const updatedReview = await this.repo.update(reviewId, updateData);
+    if (!updatedReview) {
+      throw new AppError('Review not found', HTTP_STATUS.NOT_FOUND);
+    }
+
+    if (previousStatus === REVIEW_STATUS.APPROVED) {
+      await this.recalculateBookRating(updatedReview.bookId);
+    }
+
+    return toReviewResponseDto(updatedReview);
   }
 
   async deleteReview(reviewId: string): Promise<void> {

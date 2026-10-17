@@ -11,10 +11,11 @@ export { REVIEW_EXCLUDED_FIELDS } from '@src/modules/review/review.types.js';
 export type {
   AdminReviewResponseDto,
   ICreateReviewInput,
-  IFindAdminReviewsOptions,
-  IGetAdminReviewsResult,
+  IFindAllReviewsOptions,
+  IGetReviewsResult,
   IReview,
   IReviewPlainDBResponse,
+  IUpdateReviewInput,
   ReviewExcludedField,
   ReviewResponseDto,
 } from '@src/modules/review/review.types.js';
@@ -23,5 +24,7 @@ export type {
   CreateReviewDto,
   GetAdminReviewsQueryDto,
   ReviewIdParamDto,
+  UpdateMyReviewDto,
+  UpdateReviewStatusDto,
 } from '@src/modules/review/review.validate.js';
 

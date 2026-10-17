@@ -96,6 +96,7 @@ export const REVIEW_VALIDATIONS = {
 export const REVIEW_STATUS = {
   PENDING: 'pending',
   APPROVED: 'approved',
+  REJECTED: 'rejected',
 } as const;
 
 export type ReviewStatus = (typeof REVIEW_STATUS)[keyof typeof REVIEW_STATUS];

@@ -12,6 +12,7 @@ export interface IReview {
   rating: number;
   comment: string;
   status: ReviewStatus;
+  rejectionReason?: string;
 }
 
 export interface IReviewPlainDBResponse extends IReview {
@@ -38,17 +39,25 @@ export interface ICreateReviewInput {
   comment: string;
 }
 
-export interface IFindAdminReviewsOptions {
+export interface IUpdateReviewInput {
+  rating?: number | undefined;
+  comment?: string | undefined;
+  status?: ReviewStatus | undefined;
+  rejectionReason?: string | undefined;
+}
+
+export interface IFindAllReviewsOptions {
   page: number;
   limit: number;
   status?: ReviewStatus | undefined;
+  bookId?: string | undefined;
+  userId?: string | undefined;
 }
 
-export interface IGetAdminReviewsResult {
+export interface IGetReviewsResult {
   reviews: AdminReviewResponseDto[];
   total: number;
   totalPages: number;
   page: number;
   limit: number;
 }
-

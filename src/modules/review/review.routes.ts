@@ -1,15 +1,19 @@
 import {
-  approveReviewCntlr,
   deleteReviewCntlr,
   getAdminReviewsCntlr,
   getBookReviewsCntlr,
+  getMyReviewsCntlr,
   submitReviewCntlr,
+  updateMyReviewCntlr,
+  updateReviewStatusCntlr,
 } from '@src/modules/review/review.controller.js';
 import {
   bookIdReviewParamSchema,
   createReviewSchema,
   getAdminReviewsQuerySchema,
   reviewIdParamSchema,
+  updateMyReviewSchema,
+  updateReviewStatusSchema,
 } from '@src/modules/review/review.validate.js';
 import {
   authenticate,
@@ -22,26 +26,50 @@ import express from 'express';
 
 const reviewRoutes = express.Router();
 
-// 1. Admin: View all reviews (filterable by status: pending / approved)
+// 1. Current User: View all reviews submitted by me
 reviewRoutes.get(
-  '/admin/all',
+  '/me',
+  authenticate,
+  getMyReviewsCntlr,
+);
+
+// 2. Authenticated Users: View approved reviews for a specific book
+reviewRoutes.get(
+  '/book/:bookId',
+  authenticate,
+  validate(bookIdReviewParamSchema),
+  getBookReviewsCntlr,
+);
+
+// 3. Admin: View all reviews (filter by status: pending / approved / rejected)
+reviewRoutes.get(
+  '/admin',
   authenticate,
   authorize(USER_ROLES.ADMIN),
   validate(getAdminReviewsQuerySchema),
   getAdminReviewsCntlr,
 );
 
-// 2. Admin: Approve review (Updates book rating & totalRatings)
+// 4. Admin: Update review status (approved / rejected / pending)
 reviewRoutes.patch(
-  '/:id/approve',
+  '/:id/status',
   csrfGuard,
   authenticate,
   authorize(USER_ROLES.ADMIN),
-  validate(reviewIdParamSchema),
-  approveReviewCntlr,
+  validate(updateReviewStatusSchema),
+  updateReviewStatusCntlr,
 );
 
-// 3. Admin: Delete review (Recalculates book rating if approved)
+// 5. Authenticated User: Update / resubmit own review (Resets status to pending moderation)
+reviewRoutes.patch(
+  '/:id',
+  csrfGuard,
+  authenticate,
+  validate(updateMyReviewSchema),
+  updateMyReviewCntlr,
+);
+
+// 6. Admin: Delete review (Recalculates book rating if approved)
 reviewRoutes.delete(
   '/:id',
   csrfGuard,
@@ -51,23 +79,13 @@ reviewRoutes.delete(
   deleteReviewCntlr,
 );
 
-// 4. User: Submit new review (Defaults to pending moderation)
+// 7. Authenticated User / Admin: Submit new review (Defaults to pending moderation)
 reviewRoutes.post(
   '/',
   csrfGuard,
   authenticate,
-  authorize(USER_ROLES.USER),
   validate(createReviewSchema),
   submitReviewCntlr,
 );
 
-// 5. Authenticated Users: View approved reviews for a specific book
-reviewRoutes.get(
-  '/:bookId',
-  authenticate,
-  validate(bookIdReviewParamSchema),
-  getBookReviewsCntlr,
-);
-
 export default reviewRoutes;
-

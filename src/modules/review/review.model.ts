@@ -13,13 +13,11 @@ const reviewSchema = new mongoose.Schema<IReviewDocument>(
       type: String,
       required: [true, 'Book ID is required'],
       ref: 'Book',
-      index: true,
     },
     userId: {
       type: String,
       required: [true, 'User ID is required'],
       ref: 'User',
-      index: true,
     },
     userName: {
       type: String,
@@ -81,7 +79,12 @@ const reviewSchema = new mongoose.Schema<IReviewDocument>(
       type: String,
       enum: Object.values(REVIEW_STATUS),
       default: REVIEW_STATUS.PENDING,
-      index: true,
+    },
+    rejectionReason: {
+      type: String,
+      default: '',
+      trim: true,
+      maxLength: [500, 'Rejection reason cannot exceed 500 characters'],
     },
   },
   {
@@ -103,6 +106,7 @@ const reviewSchema = new mongoose.Schema<IReviewDocument>(
 // Compound index: A user can review a book at most once
 reviewSchema.index({ bookId: 1, userId: 1 }, { unique: true });
 reviewSchema.index({ bookId: 1, status: 1, createdAt: -1 });
+reviewSchema.index({ userId: 1, createdAt: -1 });
 reviewSchema.index({ status: 1, createdAt: -1 });
 
 export const Review: Model<IReviewDocument> =

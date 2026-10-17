@@ -2,12 +2,15 @@ import { reviewService } from '@src/modules/review/review.service.js';
 import type {
   CreateReviewDto,
   GetAdminReviewsQueryDto,
+  UpdateMyReviewDto,
+  UpdateReviewStatusDto,
 } from '@src/modules/review/review.validate.js';
 import asyncCatch from '@src/shared/utils/asyncCatch.js';
 import { HTTP_STATUS } from '@src/shared/utils/constants.js';
 import sendResponse from '@src/shared/utils/sendResponse.js';
 import type { Request, Response } from 'express';
 
+// GET /api/v1/reviews/book/:bookId
 export const getBookReviewsCntlr = asyncCatch(
   async (req: Request, res: Response) => {
     const { bookId } = req.params as { bookId: string };
@@ -22,6 +25,22 @@ export const getBookReviewsCntlr = asyncCatch(
   },
 );
 
+// GET /api/v1/reviews/me
+export const getMyReviewsCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const authUser = req.user!;
+    const reviews = await reviewService.getMyReviews(authUser.userId);
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message: 'My reviews retrieved successfully',
+      data: reviews,
+    });
+  },
+);
+
+// POST /api/v1/reviews
 export const submitReviewCntlr = asyncCatch(
   async (req: Request, res: Response) => {
     const authUser = req.user!;
@@ -43,6 +62,7 @@ export const submitReviewCntlr = asyncCatch(
   },
 );
 
+// GET /api/v1/reviews/admin
 export const getAdminReviewsCntlr = asyncCatch(
   async (req: Request, res: Response) => {
     const query = req.query as unknown as GetAdminReviewsQueryDto;
@@ -63,19 +83,49 @@ export const getAdminReviewsCntlr = asyncCatch(
   },
 );
 
-export const approveReviewCntlr = asyncCatch(
+// PATCH /api/v1/reviews/:id/status
+export const updateReviewStatusCntlr = asyncCatch(
   async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
-    await reviewService.approveReview(id);
+    const body: UpdateReviewStatusDto = req.body;
+    const updatedReview = await reviewService.updateReviewStatus(
+      id,
+      body.status,
+      body.rejectionReason,
+    );
 
     sendResponse(res, {
       statusCode: HTTP_STATUS.OK,
       success: true,
-      message: 'Review approved and ratings updated',
+      message: `Review status updated to ${body.status}`,
+      data: updatedReview,
     });
   },
 );
 
+// PATCH /api/v1/reviews/:id
+export const updateMyReviewCntlr = asyncCatch(
+  async (req: Request, res: Response) => {
+    const authUser = req.user!;
+    const { id } = req.params as { id: string };
+    const body: UpdateMyReviewDto = req.body;
+
+    const updatedReview = await reviewService.updateMyReview(
+      id,
+      authUser.userId,
+      body,
+    );
+
+    sendResponse(res, {
+      statusCode: HTTP_STATUS.OK,
+      success: true,
+      message: 'Review updated and submitted for moderation',
+      data: updatedReview,
+    });
+  },
+);
+
+// DELETE /api/v1/reviews/:id
 export const deleteReviewCntlr = asyncCatch(
   async (req: Request, res: Response) => {
     const { id } = req.params as { id: string };
@@ -88,4 +138,3 @@ export const deleteReviewCntlr = asyncCatch(
     });
   },
 );
-

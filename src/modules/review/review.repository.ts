@@ -1,26 +1,27 @@
 import { Review } from '@src/modules/review/review.model.js';
 import type {
-  IFindAdminReviewsOptions,
+  IFindAllReviewsOptions,
   IReview,
   IReviewPlainDBResponse,
+  IUpdateReviewInput,
 } from '@src/modules/review/review.types.js';
-import {
-  REVIEW_STATUS,
-  type ReviewStatus,
-} from '@src/shared/utils/constants.js';
+import type { ReviewStatus } from '@src/shared/utils/constants.js';
 
 export interface IReviewRepository {
-  create(data: Omit<IReview, 'status'>): Promise<IReviewPlainDBResponse>;
+  create(data: IReview): Promise<IReviewPlainDBResponse>;
   findById(reviewId: string): Promise<IReviewPlainDBResponse | null>;
-  findByBookId(bookId: string): Promise<IReviewPlainDBResponse[]>;
-  findApprovedByBookId(bookId: string): Promise<IReviewPlainDBResponse[]>;
-  findAll(options: IFindAdminReviewsOptions): Promise<{
+  findByBookId(
+    bookId: string,
+    status?: ReviewStatus,
+  ): Promise<IReviewPlainDBResponse[]>;
+  findByUserId(userId: string): Promise<IReviewPlainDBResponse[]>;
+  findAll(options: IFindAllReviewsOptions): Promise<{
     reviews: IReviewPlainDBResponse[];
     total: number;
   }>;
-  updateStatus(
+  update(
     reviewId: string,
-    status: ReviewStatus,
+    data: IUpdateReviewInput,
   ): Promise<IReviewPlainDBResponse | null>;
   delete(reviewId: string): Promise<IReviewPlainDBResponse | null>;
   existsByBookAndUser(bookId: string, userId: string): Promise<boolean>;
@@ -29,11 +30,8 @@ export interface IReviewRepository {
 export class ReviewRepository implements IReviewRepository {
   constructor(private readonly model = Review) {}
 
-  async create(data: Omit<IReview, 'status'>): Promise<IReviewPlainDBResponse> {
-    const doc = await this.model.create({
-      ...data,
-      status: REVIEW_STATUS.PENDING,
-    });
+  async create(data: IReview): Promise<IReviewPlainDBResponse> {
+    const doc = await this.model.create(data);
     return doc.toObject() as unknown as IReviewPlainDBResponse;
   }
 
@@ -45,32 +43,41 @@ export class ReviewRepository implements IReviewRepository {
     return doc.toObject() as unknown as IReviewPlainDBResponse;
   }
 
-  async findByBookId(bookId: string): Promise<IReviewPlainDBResponse[]> {
+  async findByBookId(
+    bookId: string,
+    status?: ReviewStatus,
+  ): Promise<IReviewPlainDBResponse[]> {
+    const filter: Record<string, unknown> = { bookId };
+    if (status) {
+      filter.status = status;
+    }
+
+    const docs = await this.model.find(filter).sort({ createdAt: -1 }).exec();
+    return docs.map(d => d.toObject() as unknown as IReviewPlainDBResponse);
+  }
+
+  async findByUserId(userId: string): Promise<IReviewPlainDBResponse[]> {
     const docs = await this.model
-      .find({ bookId, status: REVIEW_STATUS.APPROVED })
+      .find({ userId })
       .sort({ createdAt: -1 })
       .exec();
 
     return docs.map(d => d.toObject() as unknown as IReviewPlainDBResponse);
   }
 
-  async findApprovedByBookId(
-    bookId: string,
-  ): Promise<IReviewPlainDBResponse[]> {
-    const docs = await this.model
-      .find({ bookId, status: REVIEW_STATUS.APPROVED })
-      .exec();
-
-    return docs.map(d => d.toObject() as unknown as IReviewPlainDBResponse);
-  }
-
-  async findAll(options: IFindAdminReviewsOptions): Promise<{
+  async findAll(options: IFindAllReviewsOptions): Promise<{
     reviews: IReviewPlainDBResponse[];
     total: number;
   }> {
     const filter: Record<string, unknown> = {};
     if (options.status) {
       filter.status = options.status;
+    }
+    if (options.bookId) {
+      filter.bookId = options.bookId;
+    }
+    if (options.userId) {
+      filter.userId = options.userId;
     }
 
     const skip = (options.page - 1) * options.limit;
@@ -91,14 +98,14 @@ export class ReviewRepository implements IReviewRepository {
     };
   }
 
-  async updateStatus(
+  async update(
     reviewId: string,
-    status: ReviewStatus,
+    data: IUpdateReviewInput,
   ): Promise<IReviewPlainDBResponse | null> {
     const doc = await this.model
       .findByIdAndUpdate(
         reviewId,
-        { $set: { status } },
+        { $set: data },
         { returnDocument: 'after', runValidators: true },
       )
       .exec();
@@ -120,9 +127,7 @@ export class ReviewRepository implements IReviewRepository {
   }
 
   async existsByBookAndUser(bookId: string, userId: string): Promise<boolean> {
-    const count = await this.model
-      .countDocuments({ bookId, userId })
-      .exec();
+    const count = await this.model.countDocuments({ bookId, userId }).exec();
     return count > 0;
   }
 }
