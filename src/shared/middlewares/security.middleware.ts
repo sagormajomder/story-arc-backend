@@ -15,7 +15,7 @@ export const csrfGuard = (req: Request, _res: Response, next: NextFunction) => {
     throw new AppError('Forbidden origin', HTTP_STATUS.FORBIDDEN);
   }
 
-  if (req.get('x-requested-with') !== 'fetch') {
+  if (!req.get('x-requested-with')) {
     throw new AppError('Missing required header', HTTP_STATUS.FORBIDDEN);
   }
 

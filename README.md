@@ -185,7 +185,7 @@ The application utilizes strict Zod schema validation (`src/config/env.ts`) duri
 | `GOOGLE_CLIENT_ID` | No | — | Google OAuth2 Client ID for Google SSO authentication. |
 | `SUPER_ADMIN_NAME` | No | `Super Admin` | Full name of the initial admin provisioned by `pnpm seed:admin`. |
 | `SUPER_ADMIN_EMAIL` | No | `admin@storyarc.com` | Email of the initial admin provisioned by `pnpm seed:admin`. |
-| `SUPER_ADMIN_PASSWORD` | No | `Admin@123456` (dev fallback) | Password for the initial admin provisioned by `pnpm seed:admin` (min 8 chars; must be changed in production). |
+| `SUPER_ADMIN_PASSWORD` | No | Configurable (dev fallback) | Initial administrator password provisioned by `pnpm seed:admin` (min 8 chars; must be set securely in production). |
 
 > [!TIP]
 > **Email Testing in Development**: You do NOT need a Brevo account or live SMTP server for local development! When `NODE_ENV=development`, Story Arc automatically initializes a virtual [Ethereal](https://ethereal.email/) test email account using Nodemailer. When a verification or password reset email is triggered, a live preview URL (e.g., `https://ethereal.email/message/...`) is logged directly to your terminal.
@@ -244,7 +244,7 @@ Story Arc utilizes **HTTP-Only Cookies** for secure, tamper-proof session manage
 #### 2. CSRF Guard Protection
 To defend against Cross-Site Request Forgery on cookie-authenticated requests, all state-changing endpoints (`POST`, `PATCH`, `DELETE`) as well as session rotation routes (`/auth/refresh`, `/auth/logout`) enforce the **Double-Check Guard**:
 - **`Origin` Header**: Must match an allowed origin specified in `CLIENT_URLS` (e.g., `http://localhost:3000`).
-- **`X-Requested-With` Header**: Must be set to `fetch`.
+- **`X-Requested-With` Header**: Custom request header present (e.g., `XMLHttpRequest` or `fetch`) to trigger and require CORS preflight verification.
 
 ```bash
 # Step 1: Log in and store HTTP-only session cookies in a cookie jar:
@@ -257,7 +257,7 @@ curl -X POST http://localhost:8000/api/v1/auth/login \
 curl -X POST http://localhost:8000/api/v1/books \
   -H "Content-Type: application/json" \
   -H "Origin: http://localhost:3000" \
-  -H "X-Requested-With: fetch" \
+  -H "X-Requested-With: XMLHttpRequest" \
   -b cookies.txt \
   -d '{"title": "Clean Architecture", "author": "Robert C. Martin"}'
 ```
@@ -317,15 +317,15 @@ The API enforces a predictable envelope contract across all responses:
 #### 2. Authentication & Identity (`/api/v1/auth`)
 | Method | Endpoint | Access | CSRF | Rate Limit | Description |
 | :--- | :--- | :---: | :---: | :---: | :--- |
-| `POST` | `/register` | Public | No | 10 req / 15m | Registers account with Argon2id; sends email verification link. |
-| `POST` | `/verify-email` | Public | No | 10 req / 15m | Verifies email via SHA-256 hashed one-time token. |
-| `POST` | `/resend-verification` | Public | No | 3 req / 1h / email | Resends verification email (keyed by target email address). |
-| `POST` | `/login` | Public | No | 10 req / 15m | Authenticates user; issues `accessToken` & `refreshToken` cookies. |
-| `POST` | `/google` | Public | No | 10 req / 15m | Google OAuth2 SSO; handles pre-hijacking account linking. |
-| `POST` | `/forgot-password` | Public | No | 3 req / 1h / email | Sends password recovery email with secure reset token. |
-| `POST` | `/reset-password` | Public | No | 10 req / 15m | Resets password; triggers multi-device session revocation. |
-| `POST` | `/refresh` | Cookie | **Yes** | 20 req / 15m | Refresh Token Rotation (RTR) with family reuse detection. |
-| `POST` | `/logout` | Cookie | **Yes** | Global | Revokes session refresh token from DB; clears auth cookies. |
+| `POST` | `/register` | Public | No | Strict | Registers account with Argon2id; sends email verification link. |
+| `POST` | `/verify-email` | Public | No | Strict | Verifies email via SHA-256 hashed one-time token. |
+| `POST` | `/resend-verification` | Public | No | Identity-Keyed | Resends verification email (rate-limited per target email address). |
+| `POST` | `/login` | Public | No | Strict | Authenticates user; issues `accessToken` & `refreshToken` cookies. |
+| `POST` | `/google` | Public | No | Strict | Google OAuth2 SSO; handles pre-hijacking account linking. |
+| `POST` | `/forgot-password` | Public | No | Identity-Keyed | Sends password recovery email with secure reset token. |
+| `POST` | `/reset-password` | Public | No | Strict | Resets password; triggers multi-device session revocation. |
+| `POST` | `/refresh` | Cookie | **Yes** | Moderate | Refresh Token Rotation (RTR) with family reuse detection. |
+| `POST` | `/logout` | Cookie | **Yes** | Standard | Revokes session refresh token from DB; clears auth cookies. |
 
 #### 3. Users Management (`/api/v1/users`)
 | Method | Endpoint | Access | CSRF | Description |
@@ -520,14 +520,14 @@ The codebase is engineered with production-grade architectural patterns and soft
   - _Why_: Adheres to the cryptographic principle of never storing bearer credentials in plaintext. Clients receive the raw unguessable token, while the database persists only its SHA-256 hash. If the database is compromised or a backup leaks, tokens cannot be forged or used to hijack sessions or reset passwords.
 - **Multi-Tier & Identity-Keyed Rate Limiting Pattern**:
   - _Applied in_: `rateLimit.middleware.ts` across four specialized limiters:
-    - **Global Limiter**: 100 req/15m blanket protection placed *before* body parsing to conserve CPU and RAM.
-    - **Auth Limiter**: 10 req/15m throttle on `/login` and `/register`.
-    - **Refresh Limiter**: 20 req/15m throttle on `/refresh-token`.
-    - **Identity-Keyed Email Limiter**: Limits password reset and email verification attempts to 3 requests per hour *keyed by target email address* (`keyGenerator: req => 'reset-email:' + email`).
+    - **Global Limiter**: Blanket protection placed *before* body parsing to conserve CPU and RAM.
+    - **Auth Limiter**: Strict throttle on sensitive authentication endpoints (`/login`, `/register`).
+    - **Refresh Limiter**: Controlled throttle on `/refresh` to prevent token churn.
+    - **Identity-Keyed Email Limiter**: Limits password reset and email verification attempts *keyed by target email address* (`keyGenerator: req => 'reset-email:' + email`).
   - _Why_: IP-based rate limiting alone is ineffective against distributed botnets rotating thousands of residential proxies. Keying rate limits by recipient email prevents targeted inbox flooding (email bombing) attacks against specific user accounts.
 - **Custom CSRF Defense (Double-Check Guard: Origin Whitelist + Custom Header)**:
   - _Applied in_: `csrfGuard` middleware in `security.middleware.ts`.
-  - _Why_: State-changing endpoints verify that the `Origin` header matches an allowed whitelist `Set` (O(1) lookup) AND require an `X-Requested-With: fetch` header. Standard cross-origin HTML `<form>` submissions, embedded image tags, and unauthorized cross-site scripts cannot attach custom headers, defeating CSRF without requiring heavy stateful anti-CSRF token synchronization.
+  - _Why_: State-changing endpoints verify that the `Origin` header matches an allowed whitelist `Set` (O(1) lookup) AND require an `X-Requested-With` custom header. Standard cross-origin HTML `<form>` submissions, embedded image tags, and unauthorized cross-site scripts cannot attach custom headers, defeating CSRF without requiring heavy stateful anti-CSRF token synchronization.
 - **Timing Attack Defense via Dummy Hash**:
   - _Applied in_: `Argon2PasswordHasher` maintaining a static pre-computed hash and `auth.service.ts`.
   - _Why_: Eliminates response-time discrepancies between existing and non-existing email lookups, neutralizing side-channel account enumeration attacks.
@@ -735,7 +735,7 @@ The codebase is engineered with production-grade architectural patterns and soft
 - **Browser Security Invariants**: Modern browsers prevent cross-origin HTML `<form>` submissions, `<img>` tags, and standard script tags from attaching custom HTTP headers like `X-Requested-With`.
 - **Double-Check Verification**: `csrfGuard` checks that:
   1. The request `Origin` strictly matches the whitelisted `CLIENT_URLS` (`Set` lookup in $O(1)$ time).
-  2. The custom header `X-Requested-With: fetch` is present.
+  2. The custom header `X-Requested-With` is present.
   This provides foolproof defense against Cross-Site Request Forgery for cookie-authenticated endpoints with zero server memory footprint.
 
 </details>

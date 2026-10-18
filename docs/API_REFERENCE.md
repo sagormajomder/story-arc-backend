@@ -50,11 +50,11 @@ Story Arc utilizes pure **HTTP-Only Cookie Authentication** for maximum browser 
 State-changing requests (`POST`, `PATCH`, `DELETE`) as well as session management routes (`/auth/refresh`, `/auth/logout`) enforce the **Double-Check Guard**:
 
 - **`Origin` Header**: Must match an allowed origin defined in `CLIENT_URLS` (e.g., `http://localhost:3000`).
-- **`X-Requested-With` Header**: Must be set to `fetch`.
+- **`X-Requested-With` Header**: Required custom request header (e.g., `XMLHttpRequest` or `fetch`) to trigger and verify CORS preflight.
 
 ```http
 Origin: http://localhost:3000
-X-Requested-With: fetch
+X-Requested-With: XMLHttpRequest
 Content-Type: application/json
 ```
 
@@ -103,7 +103,7 @@ Heterogeneous runtime and validation errors are normalized into a standardized e
 
 - **Endpoint**: `GET /health`
 - **Access**: Public
-- **Rate Limit**: Global limiter
+- **Rate Limit**: Standard
 
 #### Response (`200 OK`)
 
@@ -127,7 +127,7 @@ Base path: `/api/v1/auth`
 
 - **Endpoint**: `POST /register`
 - **Access**: Public
-- **Rate Limit**: 10 req / 15m
+- **Rate Limit**: Strict
 
 #### Request Body
 
@@ -161,7 +161,7 @@ Base path: `/api/v1/auth`
 
 - **Endpoint**: `POST /verify-email`
 - **Access**: Public
-- **Rate Limit**: 10 req / 15m
+- **Rate Limit**: Strict
 
 #### Request Body
 
@@ -187,7 +187,7 @@ Base path: `/api/v1/auth`
 
 - **Endpoint**: `POST /resend-verification`
 - **Access**: Public
-- **Rate Limit**: 3 req / 1h (Keyed by target email address)
+- **Rate Limit**: Identity-Keyed (Per target email address)
 
 #### Request Body
 
@@ -213,7 +213,7 @@ Base path: `/api/v1/auth`
 
 - **Endpoint**: `POST /login`
 - **Access**: Public
-- **Rate Limit**: 10 req / 15m
+- **Rate Limit**: Strict
 
 #### Request Body
 
@@ -254,7 +254,7 @@ _Sets `accessToken` and `refreshToken` in HTTP-only cookies._
 
 - **Endpoint**: `POST /google`
 - **Access**: Public
-- **Rate Limit**: 10 req / 15m
+- **Rate Limit**: Strict
 
 #### Request Body
 
@@ -277,7 +277,7 @@ _Sets `accessToken` and `refreshToken` in HTTP-only cookies._
 
 - **Endpoint**: `POST /forgot-password`
 - **Access**: Public
-- **Rate Limit**: 3 req / 1h (Keyed by recipient email)
+- **Rate Limit**: Identity-Keyed (Per recipient email)
 
 #### Request Body
 
@@ -303,7 +303,7 @@ _Sets `accessToken` and `refreshToken` in HTTP-only cookies._
 
 - **Endpoint**: `POST /reset-password`
 - **Access**: Public
-- **Rate Limit**: 10 req / 15m
+- **Rate Limit**: Strict
 
 #### Request Body
 
@@ -330,8 +330,8 @@ _Sets `accessToken` and `refreshToken` in HTTP-only cookies._
 
 - **Endpoint**: `POST /refresh`
 - **Access**: Refresh Token Cookie
-- **Rate Limit**: 20 req / 15m
-- **CSRF Required**: Yes (`Origin` + `X-Requested-With: fetch`)
+- **Rate Limit**: Moderate
+- **CSRF Required**: Yes (`Origin` + `X-Requested-With`)
 
 #### Response (`200 OK`)
 
@@ -351,7 +351,7 @@ _Rotates `accessToken` and `refreshToken` cookies._
 
 - **Endpoint**: `POST /logout`
 - **Access**: Cookie / Authenticated
-- **CSRF Required**: Yes (`Origin` + `X-Requested-With: fetch`)
+- **CSRF Required**: Yes (`Origin` + `X-Requested-With`)
 
 #### Response (`200 OK`)
 
