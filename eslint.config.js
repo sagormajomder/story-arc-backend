@@ -20,6 +20,7 @@ const dependencyMap = {
   genre: ['book'], // 'genre' module can depend on 'book'
   review: ['book', 'user'], // 'review' module can depend on 'book' and 'user'
   dashboard: ['book', 'user', 'review'], // 'dashboard' module can depend on 'book', 'user', and 'review'
+  shelf: ['book', 'review'], // 'shelf' module can depend on 'book' and 'review'
 };
 
 /**

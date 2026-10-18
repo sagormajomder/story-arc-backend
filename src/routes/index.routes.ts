@@ -3,6 +3,7 @@ import bookRoutes from '@src/modules/book/book.routes.js';
 import dashboardRoutes from '@src/modules/dashboard/dashboard.routes.js';
 import genreRoutes from '@src/modules/genre/genre.routes.js';
 import reviewRoutes from '@src/modules/review/review.routes.js';
+import shelfRoutes from '@src/modules/shelf/shelf.routes.js';
 import tutorialRoutes from '@src/modules/tutorial/tutorial.routes.js';
 import userRoutes from '@src/modules/user/user.routes.js';
 import express from 'express';
@@ -15,6 +16,7 @@ router.use('/genres', genreRoutes);
 router.use('/reviews', reviewRoutes);
 router.use('/tutorials', tutorialRoutes);
 router.use('/dashboard', dashboardRoutes);
+router.use('/shelf', shelfRoutes);
 
 export default router;
 

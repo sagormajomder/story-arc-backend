@@ -31,6 +31,11 @@ export interface IBookRepository {
   ): Promise<IBookPlainDBResponse | null>;
   countBooks(): Promise<number>;
   getGenreDistribution(): Promise<IGenreDistribution[]>;
+  adjustShelvedCount(bookId: string, amount: number): Promise<void>;
+  getTopRecommendations(
+    excludeBookIds: string[],
+    limit?: number,
+  ): Promise<IBookPlainDBResponse[]>;
 }
 
 export class BookRepository implements IBookRepository {
@@ -288,6 +293,32 @@ export class BookRepository implements IBookRepository {
       .exec();
 
     return results;
+  }
+
+  async adjustShelvedCount(bookId: string, amount: number): Promise<void> {
+    await this.model
+      .findByIdAndUpdate(bookId, {
+        $inc: { shelvedCount: amount },
+      })
+      .exec();
+  }
+
+  async getTopRecommendations(
+    excludeBookIds: string[],
+    limit = 15,
+  ): Promise<IBookPlainDBResponse[]> {
+    const filter: Record<string, unknown> = {};
+    if (excludeBookIds.length > 0) {
+      filter._id = { $nin: excludeBookIds };
+    }
+
+    const docs = await this.model
+      .find(filter)
+      .sort({ rating: -1, totalRatings: -1, createdAt: -1 })
+      .limit(limit)
+      .exec();
+
+    return docs.map(d => d.toObject() as unknown as IBookPlainDBResponse);
   }
 }
 

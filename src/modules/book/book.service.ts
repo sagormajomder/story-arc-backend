@@ -31,6 +31,11 @@ export interface IBookService {
   ): Promise<BookResponseDto>;
   countBooks(): Promise<number>;
   getGenreDistribution(): Promise<IGenreDistribution[]>;
+  adjustShelvedCount(bookId: string, amount: number): Promise<void>;
+  getTopRecommendations(
+    excludeBookIds: string[],
+    limit?: number,
+  ): Promise<BookResponseDto[]>;
 }
 
 export class BookService implements IBookService {
@@ -136,6 +141,18 @@ export class BookService implements IBookService {
 
   async getGenreDistribution(): Promise<IGenreDistribution[]> {
     return this.repo.getGenreDistribution();
+  }
+
+  async adjustShelvedCount(bookId: string, amount: number): Promise<void> {
+    return this.repo.adjustShelvedCount(bookId, amount);
+  }
+
+  async getTopRecommendations(
+    excludeBookIds: string[],
+    limit = 15,
+  ): Promise<BookResponseDto[]> {
+    const books = await this.repo.getTopRecommendations(excludeBookIds, limit);
+    return books.map(toBookResponseDto);
   }
 }
 

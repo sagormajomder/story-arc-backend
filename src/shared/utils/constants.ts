@@ -108,3 +108,29 @@ export const TUTORIAL_VALIDATIONS = {
   CATEGORY_MAX_LENGTH: 50,
   YOUTUBE_REGEX: /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/,
 } as const;
+
+export const SHELF_STATUS = {
+  WANT_TO_READ: 'Want to Read',
+  CURRENTLY_READING: 'Currently Reading',
+  READ: 'Read',
+} as const;
+
+export type ShelfStatus = (typeof SHELF_STATUS)[keyof typeof SHELF_STATUS];
+
+export const SHELF_SORT_OPTIONS = {
+  NEWEST: 'newest',
+  OLDEST: 'oldest',
+  PROGRESS_DESC: 'progress_desc',
+  PROGRESS_ASC: 'progress_asc',
+} as const;
+
+export type ShelfSortOption =
+  (typeof SHELF_SORT_OPTIONS)[keyof typeof SHELF_SORT_OPTIONS];
+
+export const SHELF_VALIDATIONS = {
+  MIN_PROGRESS: 0,
+  MIN_TOTAL_PAGES: 0,
+  MIN_GOAL_TARGET: 1,
+  MAX_GOAL_TARGET: 10000,
+} as const;
+
