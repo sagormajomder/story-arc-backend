@@ -49,7 +49,7 @@ export const forgotPasswordEmailLimiter = rateLimit({
     const email = req.body?.email;
     return typeof email === 'string' && email.trim()
       ? `reset-email:${email.trim().toLowerCase()}`
-      : 'anonymous';
+      : `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;
   },
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
   message: {
@@ -69,7 +69,7 @@ export const resendVerificationEmailLimiter = rateLimit({
     const email = req.body?.email;
     return typeof email === 'string' && email.trim()
       ? `verify-email:${email.trim().toLowerCase()}`
-      : 'anonymous';
+      : `ip:${req.ip || req.socket.remoteAddress || 'unknown'}`;
   },
   statusCode: HTTP_STATUS.TOO_MANY_REQUESTS,
   message: {

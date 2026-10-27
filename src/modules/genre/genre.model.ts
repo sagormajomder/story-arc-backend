@@ -36,7 +36,7 @@ const genreSchema = new mongoose.Schema<IGenreDocument>(
   },
 );
 
-genreSchema.index({ name: 1 });
+genreSchema.index({ name: 1 }, { unique: true });
 
 export const Genre: Model<IGenreDocument> =
   mongoose.models.Genre || mongoose.model<IGenreDocument>('Genre', genreSchema);

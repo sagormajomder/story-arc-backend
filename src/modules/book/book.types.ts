@@ -10,6 +10,8 @@ export interface IBook {
   totalRatings?: number | undefined;
   shelvedCount?: number | undefined;
   publishedDate?: string | undefined;
+  isDeleted?: boolean | undefined;
+  deletedAt?: Date | null | undefined;
 }
 
 export interface IBookPlainDBResponse {
@@ -23,6 +25,8 @@ export interface IBookPlainDBResponse {
   totalRatings: number;
   shelvedCount: number;
   publishedDate?: string | undefined;
+  isDeleted?: boolean | undefined;
+  deletedAt?: Date | null | undefined;
   createdAt: Date;
   updatedAt: Date;
 }

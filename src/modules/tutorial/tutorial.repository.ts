@@ -1,4 +1,5 @@
 import { Tutorial } from '@src/modules/tutorial/tutorial.model.js';
+import { escapeRegex } from '@src/shared/utils/regex.js';
 import type {
   IFindAllTutorialsOptions,
   ITutorial,
@@ -42,14 +43,16 @@ export class TutorialRepository implements ITutorialRepository {
     const filter: Record<string, unknown> = {};
 
     if (options.category) {
+      const escapedCategory = escapeRegex(options.category.trim());
       filter.category = {
-        $regex: new RegExp(`^${options.category.trim()}$`, 'i'),
+        $regex: new RegExp(`^${escapedCategory}$`, 'i'),
       };
     }
 
     if (options.search) {
+      const escapedSearch = escapeRegex(options.search.trim());
       filter.title = {
-        $regex: options.search.trim(),
+        $regex: escapedSearch,
         $options: 'i',
       };
     }

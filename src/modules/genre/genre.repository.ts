@@ -1,4 +1,5 @@
 import { Genre } from '@src/modules/genre/genre.model.js';
+import { escapeRegex } from '@src/shared/utils/regex.js';
 import type {
   ICreateGenreInput,
   IFindAllGenresOptions,
@@ -38,8 +39,9 @@ export class GenreRepository implements IGenreRepository {
   }
 
   async findByName(name: string): Promise<IGenrePlainDBResponse | null> {
+    const escapedName = escapeRegex(name.trim());
     const genreDoc = await this.model
-      .findOne({ name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } })
+      .findOne({ name: { $regex: new RegExp(`^${escapedName}$`, 'i') } })
       .exec();
     if (!genreDoc) {
       return null;

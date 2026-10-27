@@ -5,7 +5,10 @@ import type {
   IReviewPlainDBResponse,
   IUpdateReviewInput,
 } from '@src/modules/review/review.types.js';
-import type { ReviewStatus } from '@src/shared/utils/constants.js';
+import {
+  REVIEW_STATUS,
+  type ReviewStatus,
+} from '@src/shared/utils/constants.js';
 
 export interface IReviewRepository {
   create(data: IReview): Promise<IReviewPlainDBResponse>;
@@ -26,6 +29,9 @@ export interface IReviewRepository {
   delete(reviewId: string): Promise<IReviewPlainDBResponse | null>;
   existsByBookAndUser(bookId: string, userId: string): Promise<boolean>;
   countReviews(status?: ReviewStatus): Promise<number>;
+  calculateBookRating(
+    bookId: string,
+  ): Promise<{ averageRating: number; totalRatings: number }>;
 }
 
 export class ReviewRepository implements IReviewRepository {
@@ -138,6 +144,31 @@ export class ReviewRepository implements IReviewRepository {
       filter.status = status;
     }
     return this.model.countDocuments(filter).exec();
+  }
+
+  async calculateBookRating(
+    bookId: string,
+  ): Promise<{ averageRating: number; totalRatings: number }> {
+    const results = await this.model
+      .aggregate<{ averageRating: number; totalRatings: number }>([
+        { $match: { bookId, status: REVIEW_STATUS.APPROVED } },
+        {
+          $group: {
+            _id: null,
+            averageRating: { $avg: '$rating' },
+            totalRatings: { $sum: 1 },
+          },
+        },
+      ])
+      .exec();
+
+    const stats = results[0];
+    return {
+      averageRating: stats?.averageRating
+        ? parseFloat(stats.averageRating.toFixed(1))
+        : 0,
+      totalRatings: stats?.totalRatings ?? 0,
+    };
   }
 }
 

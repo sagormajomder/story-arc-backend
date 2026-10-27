@@ -7,6 +7,7 @@ import type {
   IUpdateBookInput,
 } from '@src/modules/book/book.types.js';
 import { BOOK_SORT_OPTIONS } from '@src/shared/utils/constants.js';
+import { escapeRegex } from '@src/shared/utils/regex.js';
 
 export interface IBookRepository {
   create(bookData: ICreateBookInput): Promise<IBookPlainDBResponse>;
@@ -59,7 +60,9 @@ export class BookRepository implements IBookRepository {
     total: number;
   }> {
     const filter: Record<string, unknown> = {};
-    const andConditions: Record<string, unknown>[] = [];
+    const andConditions: Record<string, unknown>[] = [
+      { isDeleted: { $ne: true } },
+    ];
 
     // Filter by specific IDs (e.g. for user shelf/library)
     if (options.ids && options.ids.length > 0) {
@@ -68,10 +71,11 @@ export class BookRepository implements IBookRepository {
 
     // Search by title or author
     if (options.search) {
+      const sanitizedSearch = escapeRegex(options.search);
       andConditions.push({
         $or: [
-          { title: { $regex: options.search, $options: 'i' } },
-          { author: { $regex: options.search, $options: 'i' } },
+          { title: { $regex: sanitizedSearch, $options: 'i' } },
+          { author: { $regex: sanitizedSearch, $options: 'i' } },
         ],
       });
     }
@@ -169,13 +173,20 @@ export class BookRepository implements IBookRepository {
   }
 
   async delete(bookId: string): Promise<boolean> {
-    const result = await this.model.findByIdAndDelete(bookId).exec();
+    const result = await this.model
+      .findByIdAndUpdate(
+        bookId,
+        { $set: { isDeleted: true, deletedAt: new Date() } },
+        { new: true },
+      )
+      .exec();
     return result !== null;
   }
 
   async getDistinctGenres(): Promise<string[]> {
     const genres = await this.model
       .aggregate<{ genre?: string | null }>([
+        { $match: { isDeleted: { $ne: true } } },
         { $group: { _id: '$genre' } },
         { $sort: { _id: 1 } },
         { $project: { _id: 0, genre: '$_id' } },
@@ -204,7 +215,7 @@ export class BookRepository implements IBookRepository {
 
     const counts = await this.model
       .aggregate<{ _id: string; count: number }>([
-        { $match: { genre: { $in: genres } } },
+        { $match: { genre: { $in: genres }, isDeleted: { $ne: true } } },
         { $group: { _id: '$genre', count: { $sum: 1 } } },
       ])
       .exec();
@@ -255,12 +266,13 @@ export class BookRepository implements IBookRepository {
   }
 
   async countBooks(): Promise<number> {
-    return this.model.countDocuments().exec();
+    return this.model.countDocuments({ isDeleted: { $ne: true } }).exec();
   }
 
   async getGenreDistribution(): Promise<IGenreDistribution[]> {
     const results = await this.model
       .aggregate<IGenreDistribution>([
+        { $match: { isDeleted: { $ne: true } } },
         {
           $group: {
             _id: {
@@ -296,8 +308,13 @@ export class BookRepository implements IBookRepository {
   }
 
   async adjustShelvedCount(bookId: string, amount: number): Promise<void> {
+    const filter: Record<string, unknown> = { _id: bookId };
+    if (amount < 0) {
+      filter.shelvedCount = { $gte: Math.abs(amount) };
+    }
+
     await this.model
-      .findByIdAndUpdate(bookId, {
+      .updateOne(filter, {
         $inc: { shelvedCount: amount },
       })
       .exec();
@@ -307,7 +324,9 @@ export class BookRepository implements IBookRepository {
     excludeBookIds: string[],
     limit = 15,
   ): Promise<IBookPlainDBResponse[]> {
-    const filter: Record<string, unknown> = {};
+    const filter: Record<string, unknown> = {
+      isDeleted: { $ne: true },
+    };
     if (excludeBookIds.length > 0) {
       filter._id = { $nin: excludeBookIds };
     }

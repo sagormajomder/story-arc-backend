@@ -319,12 +319,27 @@ const envSchema = z.object({
   ),
   SUPER_ADMIN_PASSWORD: z.preprocess(
     emptyStringToUndefined,
-    z
-      .string({ error: 'SUPER_ADMIN_PASSWORD must be a string' })
-      .min(8, {
-        error: 'SUPER_ADMIN_PASSWORD must be at least 8 characters long',
-      })
-      .default(DEFAULT_SUPER_ADMIN_PASSWORD),
+    process.env.NODE_ENV === 'production'
+      ? z
+          .string({
+            error: iss =>
+              iss.input === undefined
+                ? 'SUPER_ADMIN_PASSWORD is required in production'
+                : 'SUPER_ADMIN_PASSWORD must be a string type',
+          })
+          .min(8, {
+            error: 'SUPER_ADMIN_PASSWORD must be at least 8 characters long',
+          })
+          .refine(val => val !== DEFAULT_SUPER_ADMIN_PASSWORD, {
+            error:
+              'Cannot use default hardcoded SUPER_ADMIN_PASSWORD in production',
+          })
+      : z
+          .string({ error: 'SUPER_ADMIN_PASSWORD must be a string' })
+          .min(8, {
+            error: 'SUPER_ADMIN_PASSWORD must be at least 8 characters long',
+          })
+          .default(DEFAULT_SUPER_ADMIN_PASSWORD),
   ),
 });
 

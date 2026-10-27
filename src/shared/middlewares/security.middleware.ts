@@ -12,11 +12,11 @@ export const csrfGuard = (req: Request, _res: Response, next: NextFunction) => {
 
   const origin = req.get('origin');
   if (!origin || !ALLOWED_ORIGINS.has(origin)) {
-    throw new AppError('Forbidden origin', HTTP_STATUS.FORBIDDEN);
+    return next(new AppError('Forbidden origin', HTTP_STATUS.FORBIDDEN));
   }
 
   if (!req.get('x-requested-with')) {
-    throw new AppError('Missing required header', HTTP_STATUS.FORBIDDEN);
+    return next(new AppError('Missing required header', HTTP_STATUS.FORBIDDEN));
   }
 
   next();

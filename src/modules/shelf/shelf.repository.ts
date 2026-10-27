@@ -13,7 +13,10 @@ import type {
   IShelfItem,
   IShelfItemPlainDBResponse,
 } from '@src/modules/shelf/shelf.types.js';
-import { SHELF_SORT_OPTIONS } from '@src/shared/utils/constants.js';
+import {
+  SHELF_SORT_OPTIONS,
+  SHELF_STATUS,
+} from '@src/shared/utils/constants.js';
 import type { Model } from 'mongoose';
 
 export interface IShelfRepository {
@@ -52,6 +55,15 @@ export interface IShelfRepository {
     longestStreak: number,
     lastReadingDate?: Date | null,
   ): Promise<IReadingStreakPlainDBResponse>;
+  getUserShelfStats(
+    userId: string,
+    year: number,
+  ): Promise<{
+    booksReadThisYear: number;
+    totalPagesRead: number;
+    totalBooksRead: number;
+  }>;
+  countBooksReadInYear(userId: string, year: number): Promise<number>;
 }
 
 export class ShelfRepository implements IShelfRepository {
@@ -225,6 +237,72 @@ export class ShelfRepository implements IShelfRepository {
       .exec();
 
     return doc.toObject() as unknown as IReadingStreakPlainDBResponse;
+  }
+
+  async getUserShelfStats(
+    userId: string,
+    year: number,
+  ): Promise<{
+    booksReadThisYear: number;
+    totalPagesRead: number;
+    totalBooksRead: number;
+  }> {
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const endOfYear = new Date(Date.UTC(year + 1, 0, 1));
+
+    const results = await this.shelfModel
+      .aggregate<{
+        totalPagesRead: number;
+        totalBooksRead: number;
+        booksReadThisYear: number;
+      }>([
+        { $match: { userId } },
+        {
+          $group: {
+            _id: null,
+            totalPagesRead: { $sum: '$progress' },
+            totalBooksRead: {
+              $sum: { $cond: [{ $eq: ['$status', SHELF_STATUS.READ] }, 1, 0] },
+            },
+            booksReadThisYear: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $eq: ['$status', SHELF_STATUS.READ] },
+                      { $gte: ['$finishedAt', startOfYear] },
+                      { $lt: ['$finishedAt', endOfYear] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+          },
+        },
+      ])
+      .exec();
+
+    const stats = results[0];
+    return {
+      booksReadThisYear: stats?.booksReadThisYear ?? 0,
+      totalPagesRead: stats?.totalPagesRead ?? 0,
+      totalBooksRead: stats?.totalBooksRead ?? 0,
+    };
+  }
+
+  async countBooksReadInYear(userId: string, year: number): Promise<number> {
+    const startOfYear = new Date(Date.UTC(year, 0, 1));
+    const endOfYear = new Date(Date.UTC(year + 1, 0, 1));
+
+    return this.shelfModel
+      .countDocuments({
+        userId,
+        status: SHELF_STATUS.READ,
+        finishedAt: { $gte: startOfYear, $lt: endOfYear },
+      })
+      .exec();
   }
 }
 

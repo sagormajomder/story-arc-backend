@@ -17,25 +17,45 @@ export interface IEmailService {
 export class NodemailerEmailService implements IEmailService {
   private transporter: Transporter | null = null;
 
-  private async getTransporter(): Promise<Transporter> {
+  private async getTransporter(): Promise<Transporter | null> {
     if (this.transporter) return this.transporter;
 
-    const testAccount = await nodemailer.createTestAccount();
-    this.transporter = nodemailer.createTransport({
-      host: testAccount.smtp.host,
-      port: testAccount.smtp.port,
-      secure: testAccount.smtp.secure,
-      auth: {
-        user: testAccount.user,
-        pass: testAccount.pass,
-      },
-    });
-    logger.info('📧 Using Ethereal test email account for development');
-    return this.transporter;
+    try {
+      const testAccount = await nodemailer.createTestAccount();
+      this.transporter = nodemailer.createTransport({
+        host: testAccount.smtp.host,
+        port: testAccount.smtp.port,
+        secure: testAccount.smtp.secure,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass,
+        },
+      });
+      logger.info('📧 Using Ethereal test email account for development');
+      return this.transporter;
+    } catch (error) {
+      logger.warn(
+        { error },
+        '⚠️ Failed to connect to Ethereal email service. Falling back to console logging.',
+      );
+      return null;
+    }
   }
 
   async sendEmail(options: ISendEmailOptions): Promise<void> {
     const transporter = await this.getTransporter();
+
+    if (!transporter) {
+      logger.info(
+        {
+          to: options.to,
+          subject: options.subject,
+          text: options.text,
+        },
+        '📨 [Offline Fallback] Email simulated in development',
+      );
+      return;
+    }
 
     const info = await transporter.sendMail({
       from: `"${env.EMAIL_FROM_NAME}" <${env.EMAIL_FROM_ADDRESS}>`,

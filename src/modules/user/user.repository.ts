@@ -12,6 +12,7 @@ import {
   type UserRole,
   VALIDATIONS,
 } from '@src/shared/utils/constants.js';
+import { escapeRegex } from '@src/shared/utils/regex.js';
 
 export interface IUserRepository {
   create(userData: IUser): Promise<IUserPlainDBResponse>;
@@ -188,15 +189,16 @@ export class UserRepository implements IUserRepository {
     }
 
     if (options.search) {
+      const sanitizedSearch = escapeRegex(options.search);
       filter.$or = [
-        { fullName: { $regex: options.search, $options: 'i' } },
-        { email: { $regex: options.search, $options: 'i' } },
+        { fullName: { $regex: sanitizedSearch, $options: 'i' } },
+        { email: { $regex: sanitizedSearch, $options: 'i' } },
       ];
     }
 
     const skip = (options.page - 1) * options.limit;
 
-    const [userDocs, total, totalUsers, adminRoles] = await Promise.all([
+    const [userDocs, total, totalUsers, activeUsers, adminRoles] = await Promise.all([
       this.model
         .find(filter)
         .sort({ createdAt: -1 })
@@ -205,6 +207,7 @@ export class UserRepository implements IUserRepository {
         .exec(),
       this.model.countDocuments(filter).exec(),
       this.model.countDocuments().exec(),
+      this.model.countDocuments({ isEmailVerified: true }).exec(),
       this.model.countDocuments({ role: USER_ROLES.ADMIN }).exec(),
     ]);
 
@@ -217,7 +220,7 @@ export class UserRepository implements IUserRepository {
       total,
       stats: {
         totalUsers,
-        activeUsers: totalUsers,
+        activeUsers,
         adminRoles,
       },
     };

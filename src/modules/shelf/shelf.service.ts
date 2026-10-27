@@ -95,7 +95,14 @@ export class ShelfService implements IShelfService {
         await this.updateReadingStreak(userId);
       }
 
-      return toShelfItemResponseDto(updated!);
+      if (!updated) {
+        throw new AppError(
+          'Failed to update shelf item',
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        );
+      }
+
+      return toShelfItemResponseDto(updated);
     }
 
     const status = input.status || SHELF_STATUS.WANT_TO_READ;
@@ -107,28 +114,58 @@ export class ShelfService implements IShelfService {
           : null;
     const finishedAt = status === SHELF_STATUS.READ ? new Date() : null;
 
-    const created = await this.repo.create({
-      userId,
-      bookId: input.bookId,
-      status,
-      progress: input.progress || 0,
-      totalPages: input.totalPages || 0,
-      startedAt,
-      finishedAt,
-      addedAt: new Date(),
-    });
+    try {
+      const created = await this.repo.create({
+        userId,
+        bookId: input.bookId,
+        status,
+        progress: input.progress ?? 0,
+        totalPages: input.totalPages ?? 0,
+        startedAt,
+        finishedAt,
+        addedAt: new Date(),
+      });
 
-    await this.bookService.adjustShelvedCount(input.bookId, 1);
+      await this.bookService.adjustShelvedCount(input.bookId, 1);
 
-    if (
-      (input.progress !== undefined && input.progress > 0) ||
-      status === SHELF_STATUS.READ
-    ) {
-      await this.updateReadingStreak(userId);
+      if (
+        (input.progress !== undefined && input.progress > 0) ||
+        status === SHELF_STATUS.READ
+      ) {
+        await this.updateReadingStreak(userId);
+      }
+
+      created.book = book;
+      return toShelfItemResponseDto(created);
+    } catch (error: unknown) {
+      // Handle concurrent creation race condition gracefully
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        (error as { code: number }).code === 11000
+      ) {
+        const updated = await this.repo.update(userId, input.bookId, {
+          status,
+          ...(input.progress !== undefined ? { progress: input.progress } : {}),
+          ...(input.totalPages !== undefined
+            ? { totalPages: input.totalPages }
+            : {}),
+          startedAt,
+          finishedAt,
+        });
+
+        if (!updated) {
+          throw new AppError(
+            'Failed to add book to shelf',
+            HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          );
+        }
+
+        return toShelfItemResponseDto(updated);
+      }
+      throw error;
     }
-
-    created.book = book;
-    return toShelfItemResponseDto(created);
   }
 
   async updateShelfProgress(
@@ -181,19 +218,25 @@ export class ShelfService implements IShelfService {
       await this.updateReadingStreak(userId);
     }
 
-    return toShelfItemResponseDto(updated!);
-  }
-
-  async removeFromShelf(userId: string, bookId: string): Promise<void> {
-    const existing = await this.repo.findByUserAndBook(userId, bookId);
-    if (!existing) {
+    if (!updated) {
       throw new AppError(
         'Book not found in your shelf',
         HTTP_STATUS.NOT_FOUND,
       );
     }
 
-    await this.repo.deleteByUserAndBook(userId, bookId);
+    return toShelfItemResponseDto(updated);
+  }
+
+  async removeFromShelf(userId: string, bookId: string): Promise<void> {
+    const deleted = await this.repo.deleteByUserAndBook(userId, bookId);
+    if (!deleted) {
+      throw new AppError(
+        'Book not found in your shelf',
+        HTTP_STATUS.NOT_FOUND,
+      );
+    }
+
     await this.bookService.adjustShelvedCount(bookId, -1);
   }
 
@@ -223,22 +266,8 @@ export class ShelfService implements IShelfService {
 
   async getUserReadingStats(userId: string): Promise<IReadingStatsResponse> {
     const currentYear = new Date().getFullYear();
-    const shelfItems = await this.repo.findAllByUserId(userId);
-
-    const readBooks = shelfItems.filter(
-      item => item.status === SHELF_STATUS.READ,
-    );
-
-    const booksReadThisYear = readBooks.filter(item => {
-      if (!item.finishedAt) return false;
-      return new Date(item.finishedAt).getFullYear() === currentYear;
-    }).length;
-
-    const totalPagesRead = shelfItems.reduce(
-      (acc, item) => acc + (item.progress || 0),
-      0,
-    );
-    const totalBooksRead = readBooks.length;
+    const { booksReadThisYear, totalPagesRead, totalBooksRead } =
+      await this.repo.getUserShelfStats(userId, currentYear);
     const streak = await this.getReadingStreak(userId);
 
     const userReviews = await this.reviewService.getMyReviews(userId);
@@ -282,14 +311,10 @@ export class ShelfService implements IShelfService {
     const targetYear = year ?? new Date().getFullYear();
     await this.repo.upsertReadingGoal(userId, targetYear, target);
 
-    const shelfItems = await this.repo.findAllByUserId(userId);
-    const booksReadThisYear = shelfItems.filter(item => {
-      return (
-        item.status === SHELF_STATUS.READ &&
-        item.finishedAt &&
-        new Date(item.finishedAt).getFullYear() === targetYear
-      );
-    }).length;
+    const booksReadThisYear = await this.repo.countBooksReadInYear(
+      userId,
+      targetYear,
+    );
 
     return {
       year: targetYear,

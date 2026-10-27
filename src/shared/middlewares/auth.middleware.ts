@@ -54,13 +54,17 @@ export const authenticate = asyncCatch(
 export const authorize = (...allowedRoles: UserRole[]) => {
   return (req: Request, _res: Response, next: NextFunction) => {
     if (!req.user) {
-      throw new AppError('Authentication required', HTTP_STATUS.UNAUTHORIZED);
+      return next(
+        new AppError('Authentication required', HTTP_STATUS.UNAUTHORIZED),
+      );
     }
 
     if (!allowedRoles.includes(req.user.role)) {
-      throw new AppError(
-        'You do not have permission to perform this action',
-        HTTP_STATUS.FORBIDDEN,
+      return next(
+        new AppError(
+          'You do not have permission to perform this action',
+          HTTP_STATUS.FORBIDDEN,
+        ),
       );
     }
 

@@ -14,17 +14,6 @@ import hpp from 'hpp';
 
 const app = express();
 
-// Health Check
-app.get('/api/v1/health', (_req: Request, res: Response) => {
-  sendResponse(res, {
-    statusCode: HTTP_STATUS.OK,
-    success: true,
-    message: 'Server is healthy',
-    data: {
-      uptime: process.uptime(),
-    },
-  });
-});
 // ////////////////////////////
 // Global middleware
 // ////////////////////////////
@@ -46,6 +35,18 @@ app.use(pinoHttpLogger);
 // ////////////////////////////
 // Routes
 // ////////////////////////////
+
+// Health Check
+app.get('/api/v1/health', (_req: Request, res: Response) => {
+  sendResponse(res, {
+    statusCode: HTTP_STATUS.OK,
+    success: true,
+    message: 'Server is healthy',
+    data: {
+      uptime: process.uptime(),
+    },
+  });
+});
 
 // index route
 app.use('/api/v1', indexRouter);

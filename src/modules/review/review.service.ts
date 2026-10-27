@@ -60,14 +60,8 @@ export class ReviewService implements IReviewService {
   ) {}
 
   private async recalculateBookRating(bookId: string): Promise<void> {
-    const approvedReviews = await this.repo.findByBookId(
-      bookId,
-      REVIEW_STATUS.APPROVED,
-    );
-    const totalRatings = approvedReviews.length;
-    const sumRatings = approvedReviews.reduce((sum, r) => sum + r.rating, 0);
-    const averageRating =
-      totalRatings > 0 ? parseFloat((sumRatings / totalRatings).toFixed(1)) : 0;
+    const { averageRating, totalRatings } =
+      await this.repo.calculateBookRating(bookId);
 
     await this.bookService.updateBookRating(bookId, averageRating, totalRatings);
   }

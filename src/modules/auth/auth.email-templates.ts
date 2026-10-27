@@ -4,6 +4,16 @@ export interface IEmailTemplate {
   text: string;
 }
 
+const escapeHtml = (str: string): string => {
+  return str.replace(/[&<>'"]/g, tag => ({
+    '&': '&amp;',
+    '<': '&lt;',
+    '>': '&gt;',
+    "'": '&#39;',
+    '"': '&quot;',
+  }[tag] || tag));
+};
+
 interface IRenderEmailLayoutOptions {
   heading: string;
   greetingName: string;
@@ -23,13 +33,16 @@ interface IRenderEmailLayoutOptions {
 export const renderEmailLayout = (
   options: IRenderEmailLayoutOptions,
 ): string => {
+  const safeHeading = escapeHtml(options.heading);
+  const safeGreetingName = escapeHtml(options.greetingName);
+
   const primaryButtonHtml = options.primaryButton
     ? `<a href="${options.primaryButton.url}"
           style="background-color: #4F46E5; color: white; padding: 12px 32px;
                  text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;${
                    options.secondaryButton ? ' margin-right: 10px;' : ''
                  }">
-         ${options.primaryButton.text}
+         ${escapeHtml(options.primaryButton.text)}
        </a>`
     : '';
 
@@ -37,7 +50,7 @@ export const renderEmailLayout = (
     ? `<a href="${options.secondaryButton.url}"
           style="background-color: #6B7280; color: white; padding: 12px 24px;
                  text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-         ${options.secondaryButton.text}
+         ${escapeHtml(options.secondaryButton.text)}
        </a>`
     : '';
 
@@ -61,8 +74,8 @@ export const renderEmailLayout = (
 
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; color: #333;">
-      <h2 style="color: #4F46E5;">${options.heading}</h2>
-      <p>Hi ${options.greetingName},</p>
+      <h2 style="color: #4F46E5;">${safeHeading}</h2>
+      <p>Hi ${safeGreetingName},</p>
       ${options.bodyHtml}
       ${buttonsHtml}
       ${noticeHtml}

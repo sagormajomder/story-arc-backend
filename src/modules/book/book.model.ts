@@ -72,6 +72,15 @@ const bookSchema = new mongoose.Schema<IBookDocument>(
       type: String,
       trim: true,
     },
+    isDeleted: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
+    deletedAt: {
+      type: Date,
+      default: null,
+    },
   },
   {
     timestamps: true,
@@ -92,6 +101,7 @@ const bookSchema = new mongoose.Schema<IBookDocument>(
 bookSchema.index({ title: 'text', author: 'text' });
 bookSchema.index({ rating: -1 });
 bookSchema.index({ createdAt: -1 });
+bookSchema.index({ isDeleted: 1, createdAt: -1 });
 
 export const Book: Model<IBookDocument> =
   mongoose.models.Book || mongoose.model<IBookDocument>('Book', bookSchema);

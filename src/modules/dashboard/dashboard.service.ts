@@ -14,7 +14,7 @@ import {
   userService as defaultUserService,
   type IUserService,
 } from '@src/modules/user/user.index.js';
-import { REVIEW_STATUS, USER_ROLES } from '@src/shared/utils/constants.js';
+import { REVIEW_STATUS } from '@src/shared/utils/constants.js';
 
 export interface IDashboardService {
   getDashboardStats(): Promise<IDashboardStats>;
@@ -31,7 +31,7 @@ export class DashboardService implements IDashboardService {
   async getDashboardStats(): Promise<IDashboardStats> {
     const [totalBooks, totalUsers, pendingReviews] = await Promise.all([
       this.bookService.countBooks(),
-      this.userService.countUsers(USER_ROLES.USER),
+      this.userService.countUsers(),
       this.reviewService.countReviews(REVIEW_STATUS.PENDING),
     ]);
 
