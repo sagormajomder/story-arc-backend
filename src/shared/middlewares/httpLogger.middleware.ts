@@ -1,25 +1,40 @@
-import { logger } from '@src/shared/utils/logger.js';
-import { pinoHttp } from 'pino-http';
+import { env } from '@src/config/env.js';
+import pino from 'pino';
 
-export const pinoHttpLogger = pinoHttp({
-  logger,
-  autoLogging: {
-    ignore: req => req.url === '/api/v1/health',
+export const logger = pino({
+  name: 'story-arc-api',
+  level: env.isDevelopment ? 'debug' : 'info',
+  redact: {
+    paths: [
+      'req.headers.authorization',
+      'req.headers.cookie',
+      'password',
+      '*.password',
+      '*.*.password',
+      'newPassword',
+      '*.newPassword',
+      '*.*.newPassword',
+      'currentPassword',
+      '*.currentPassword',
+      'confirmPassword',
+      '*.confirmPassword',
+      'refreshToken',
+      '*.refreshToken',
+      'accessToken',
+      '*.accessToken',
+      'secret',
+      '*.secret',
+    ],
+    censor: '[REDACTED]',
   },
-  customLogLevel: (_req, res, err) => {
-    if (res.statusCode >= 500 || err) return 'error';
-    if (res.statusCode >= 400) return 'warn';
-    return 'info';
-  },
-  serializers: {
-    req: req => ({
-      id: req.id,
-      method: req.method,
-      url: req.url,
-      query: req.query,
-    }),
-    res: res => ({
-      statusCode: res.statusCode,
-    }),
-  },
+  ...(env.isDevelopment && {
+    transport: {
+      target: 'pino-pretty',
+      options: {
+        colorize: true,
+        translateTime: 'SYS:HH:MM:ss',
+        ignore: 'pid,hostname',
+      },
+    },
+  }),
 });
