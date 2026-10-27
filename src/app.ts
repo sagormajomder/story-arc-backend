@@ -12,6 +12,8 @@ import express from 'express';
 import helmet from 'helmet';
 import hpp from 'hpp';
 
+export const API_TIMEOUT_MS = 15_000;
+
 const app = express();
 
 // ////////////////////////////
@@ -22,15 +24,15 @@ app.set('trust proxy', 1);
 // 2. Base Security & Headers
 app.use(helmet());
 app.use(cors(corsOptions));
-// 3. Global Rate Limiter (Placed BEFORE body parser to save CPU/RAM)
+// 3. Request Logging (Placed early to assign request IDs and capture 429 rate limit events)
+app.use(pinoHttpLogger);
+// 4. Global Rate Limiter (Placed BEFORE body parser to save CPU/RAM)
 app.use(globalLimiter);
-// 4. Body Parsers & Cookie Parser
+// 5. Body Parsers & Cookie Parser
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(cookieParser());
 app.use(hpp());
-// 5. Request Logging
-app.use(pinoHttpLogger);
 
 // ////////////////////////////
 // Routes

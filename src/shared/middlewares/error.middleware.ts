@@ -13,12 +13,10 @@ interface MongoDuplicateKeyError {
 
 export function errorHandler(
   err: unknown,
-  _req: Request,
+  req: Request,
   res: Response,
   _next: NextFunction,
 ) {
-  logger.error({ err }, 'Error caught in global error handler');
-
   let statusCode: number = HTTP_STATUS.INTERNAL_SERVER_ERROR;
   let message: string = 'Internal server error';
   let errorSources: IErrorSource[] = [
@@ -102,6 +100,14 @@ export function errorHandler(
         message,
       },
     ];
+  }
+
+  const requestLogger = req.log || logger;
+
+  if (statusCode >= 500) {
+    requestLogger.error({ err }, 'Unhandled server error');
+  } else {
+    requestLogger.warn({ err }, 'Client error handled');
   }
 
   return res.status(statusCode).json({
