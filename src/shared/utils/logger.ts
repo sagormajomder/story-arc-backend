@@ -1,8 +1,9 @@
 import { env } from '@src/config/env.js';
+import { SERVICE_NAME } from '@src/shared/utils/constants.js';
 import pino from 'pino';
 
 export const logger = pino({
-  name: 'story-arc-api',
+  name: SERVICE_NAME,
   level: env.isDevelopment ? 'debug' : 'info',
   serializers: {
     err: pino.stdSerializers.err,

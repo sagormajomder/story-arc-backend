@@ -7,7 +7,7 @@
     "dev": "tsx watch --env-file=.env src/server.ts",
     "seed:admin": "tsx --env-file=.env src/scripts/seed.ts",
     "build": "tsc && tsc-alias",
-    "start": "node --env-file=.env dist/server.js",
+    "start": "node dist/server.js",
     "lint": "eslint src"
   },
   "keywords": [],

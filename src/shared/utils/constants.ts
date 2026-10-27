@@ -1,3 +1,4 @@
+export const SERVICE_NAME = 'story-arc-api';
 export const VALIDATIONS = {
   FULLNAME_MIN_LENGTH: 3,
   FULLNAME_MAX_LENGTH: 50,
@@ -133,4 +134,3 @@ export const SHELF_VALIDATIONS = {
   MIN_GOAL_TARGET: 1,
   MAX_GOAL_TARGET: 10000,
 } as const;
-
