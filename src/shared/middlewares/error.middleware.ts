@@ -15,8 +15,12 @@ export function errorHandler(
   err: unknown,
   req: Request,
   res: Response,
-  _next: NextFunction,
+  next: NextFunction,
 ) {
+  if (res.headersSent) {
+    return next(err);
+  }
+
   let statusCode: number = HTTP_STATUS.INTERNAL_SERVER_ERROR;
   let message: string = 'Internal server error';
   let errorSources: IErrorSource[] = [

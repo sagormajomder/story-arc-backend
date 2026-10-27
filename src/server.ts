@@ -1,7 +1,7 @@
-import app, { API_TIMEOUT_MS } from '@src/app.js';
+import app from '@src/app.js';
 import { env } from '@src/config/env.js';
 import { connectDB, disconnectDB } from '@src/shared/database/db.js';
-import { TIME_MS } from '@src/shared/utils/constants.js';
+import { API_TIMEOUT_MS, TIME_MS } from '@src/shared/utils/constants.js';
 import { beginShutdown, isShuttingDown } from '@src/shared/utils/lifeCycle.js';
 import { closedServer, listenServer } from '@src/shared/utils/listenServer.js';
 import { logger } from '@src/shared/utils/logger.js';

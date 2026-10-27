@@ -45,6 +45,7 @@ export const HTTP_STATUS = {
   TOO_MANY_REQUESTS: 429,
   INTERNAL_SERVER_ERROR: 500,
   SERVICE_UNAVAILABLE: 503,
+  GATEWAY_TIMEOUT: 504,
 } as const;
 
 export const COOKIE_CONFIG = {
@@ -60,6 +61,8 @@ export const TIME_MS = {
   HOUR: 60 * 60 * 1000,
   DAY: 24 * 60 * 60 * 1000,
 } as const;
+
+export const API_TIMEOUT_MS = 15 * TIME_MS.SECOND;
 
 export const BOOK_VALIDATIONS = {
   TITLE_MIN_LENGTH: 1,

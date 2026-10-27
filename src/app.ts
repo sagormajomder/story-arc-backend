@@ -3,7 +3,8 @@ import indexRouter from '@src/routes/index.routes.js';
 import { errorHandler } from '@src/shared/middlewares/error.middleware.js';
 import { pinoHttpLogger } from '@src/shared/middlewares/httpLogger.middleware.js';
 import { globalLimiter } from '@src/shared/middlewares/rateLimit.middleware.js';
-import { HTTP_STATUS, TIME_MS } from '@src/shared/utils/constants.js';
+import { requestTimeout } from '@src/shared/middlewares/timeout.middleware.js';
+import { API_TIMEOUT_MS, HTTP_STATUS } from '@src/shared/utils/constants.js';
 import sendResponse from '@src/shared/utils/sendResponse.js';
 import cookieParser from 'cookie-parser';
 import cors from 'cors';
@@ -11,8 +12,6 @@ import type { Request, Response } from 'express';
 import express from 'express';
 import helmet from 'helmet';
 import hpp from 'hpp';
-
-export const API_TIMEOUT_MS = 15 * TIME_MS.SECOND;
 
 const app = express();
 
@@ -28,7 +27,9 @@ app.use(cors(corsOptions));
 app.use(pinoHttpLogger);
 // 4. Global Rate Limiter (Placed BEFORE body parser to save CPU/RAM)
 app.use(globalLimiter);
-// 5. Body Parsers & Cookie Parser
+// 5. API Timeout
+app.use(requestTimeout(API_TIMEOUT_MS));
+// 6. Body Parsers & Cookie Parser
 app.use(express.json({ limit: '16kb' }));
 app.use(express.urlencoded({ extended: true, limit: '16kb' }));
 app.use(cookieParser());

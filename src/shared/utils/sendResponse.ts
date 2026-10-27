@@ -2,6 +2,10 @@ import type { IResponse } from '@src/shared/utils/types.js';
 import type { Response } from 'express';
 
 export function sendResponse<T>(res: Response, data: IResponse<T>): void {
+  if (res.headersSent) {
+    return;
+  }
+
   const responsePayload: {
     success: boolean;
     message?: string;
